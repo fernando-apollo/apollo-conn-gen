@@ -1,10 +1,10 @@
-import { IType } from './nodes/type';
-import { trace } from '../log/trace';
+import {IType} from './nodes/type';
+import {trace} from '../log/trace';
 import Oas from 'oas';
-import Prompt from './prompt';
-import {ResponseObject, SchemaObject} from 'oas/types';
-import { ReferenceObject } from './nodes/props/types';
+import {ResponseObject, SchemaObject} from 'oas/dist/types';
+import {ReferenceObject} from './nodes/props/types';
 import Naming from './utils/naming';
+// import Prompt from "../prompts/prompt";
 
 export default class Context {
   public static readonly COMPONENTS_SCHEMAS: string = '#/components/schemas/';
@@ -12,13 +12,13 @@ export default class Context {
     '#/components/responses/';
 
   private parser: Oas;
-  private prompt: Prompt;
+  // private prompt: Prompt;
   public generatedSet: Set<string> = new Set();
   public indent: number;
 
-  constructor(parser: Oas, prompt: Prompt) {
+  constructor(parser: Oas) {
     this.parser = parser;
-    this.prompt = prompt;
+    // this.prompt = prompt;
     this.indent = 0;
   }
 
@@ -64,5 +64,19 @@ export default class Context {
       return schemas ? schemas[Naming.getRefName(ref)!] : null;
     }
     return null;
+  }
+
+  inContextOf(type: string, node: IType): boolean {
+    // console
+    for (let i = this.stack.length - 1; i >= 0; i--) {
+      if (this.stack[i] === node)
+        continue;
+
+      if (this.stack[i].constructor.name === type) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

@@ -1,0 +1,498 @@
+import {
+  createPrompt, isBackspaceKey, isDownKey, isEnterKey, isSpaceKey, isUpKey,
+  makeTheme,
+  Status, Theme,
+  useKeypress,
+  useMemo,
+  usePagination,
+  usePrefix,
+  useState
+} from '@inquirer/core';
+import inquirer from '@inquirer/prompts';
+import {IType} from "../parser/nodes/type";
+import {CustomTheme, RenderContext} from "./theme";
+import PropScalar from "../parser/nodes/props/prop_scalar";
+import {getMaxLength, isEscapeKey} from "./base/utils";
+import figures from "@inquirer/figures";
+
+import type { PartialDeep } from '@inquirer/type'
+// import colors from "yoctocolors";
+// async function dynamicImport() {
+//   const yoctoModule = await import('yoctocolors');
+//   const colors = yoctoModule.default || yoctoModule;
+//   console.log(colors.green("Hello from dynamic Chalk!"));
+// }
+//
+// dynamicImport();
+
+export interface Input {
+  yesNo(id: string, prompt: string): Promise<boolean>;
+
+  yesNoSelect(id: string, prompt: string): Promise<string>; // returns 'y', 'n', or 's'
+}
+
+export class Prompt {
+  private input: Input;
+
+  private constructor(input: Input) {
+    this.input = input;
+  }
+
+  public static create(input: Input): Prompt {
+    return new Prompt(input);
+  }
+
+  public getInput(): Input {
+    return this.input;
+  }
+
+  public setInput(input: Input): void {
+    this.input = input;
+  }
+
+  public async yesNo(id: string, prompt: string): Promise<boolean> {
+    return await this.input.yesNo(id, prompt);
+  }
+
+  public async yesNoSelect(id: string, prompt: string): Promise<string> {
+    return await this.input.yesNoSelect(id, prompt);
+  }
+}
+
+// ----------------------------------------------
+// ConsoleInput: uses inquirer and chalk for prompts.
+// export class ConsoleInput implements Input {
+//   async yesNo(id: string, prompt: string): Promise<boolean> {
+//     const message = chalk.blue(`${prompt} 'y': Yes, 'n': No`);
+//     const { answer } = await inquirer.prompt([
+//       {
+//         type: 'input',
+//         name: 'answer',
+//         message: message,
+//         default: 'y',
+//       },
+//     ]);
+//     return answer.trim() === '' || answer.trim().toLowerCase() === 'y';
+//   }
+//
+//   async yesNoSelect(id: string, prompt: string): Promise<string> {
+//     const message = chalk.green(`${prompt} 'y': Yes, 'n': Skip, 's': Select`);
+//     const { answer } = await inquirer.prompt([
+//       {
+//         type: 'input',
+//         name: 'answer',
+//         message: message,
+//         default: 'y',
+//       },
+//     ]);
+//     const trimmed = answer.trim().toLowerCase();
+//     if (trimmed === '' || trimmed === 'y') return 'y';
+//     else if (trimmed === 's') return 's';
+//     else return 'n';
+//   }
+// }
+
+// ----------------------------------------------
+// Player: uses a provided array of responses.
+export class Player implements Input {
+  private record: string[];
+  private track: number = 0;
+
+  constructor(record: string[]) {
+    this.record = record;
+  }
+
+  async yesNo(id: string, prompt: string): Promise<boolean> {
+    const response = this.record[this.track++].substring(1, 2);
+    const result = response.toLowerCase() === 'y';
+    console.log(
+      // chalk.blue(
+      `${prompt} 'y': Yes, 'n': No -> ${response}, response? ${result}`
+      // )
+    );
+    return result;
+  }
+
+  async yesNoSelect(id: string, prompt: string): Promise<string> {
+    const response = this.record[this.track++].substring(1, 2);
+    console.log(
+      // chalk.green(
+      `${prompt} 'y': Yes, 'n': Skip, 's': Select -> ${response}`
+      // )
+    );
+    if (response.toLowerCase() === 'y') return 'y';
+    else if (response.toLowerCase() === 's') return 's';
+    else return 'n';
+  }
+}
+
+// ----------------------------------------------
+// MapPlayer: uses a provided map of responses.
+export class MapPlayer implements Input {
+  private records: Map<string, string>;
+
+  // For simplicity, we assume order is not important.
+  constructor(records: Map<string, string>) {
+    this.records = records;
+  }
+
+  async yesNo(id: string, prompt: string): Promise<boolean> {
+    const response = this.records.get(id);
+    if (response === undefined) {
+      throw new Error(`Could not find response for '${id}'`);
+    }
+    const result = response.toLowerCase() === 'y';
+    console.log(
+      // chalk.blue(
+      `[${id}]: ${prompt} 'y': Yes, 'n': No -> ${response}, response? ${result}`
+      // )
+    );
+    return result;
+  }
+
+  async yesNoSelect(id: string, prompt: string): Promise<string> {
+    const response = this.records.get(id);
+    if (response === undefined) {
+      throw new Error(`Could not find response for '${id}'`);
+    }
+    console.log(
+      // chalk.green(
+      `[${id}]: ${prompt} 'y': Yes, 'n': Skip, 's': Select -> ${response}`
+      // )
+    );
+    if (response.toLowerCase() === 'y') return 'y';
+    else if (response.toLowerCase() === 's') return 's';
+    else return 'n';
+  }
+}
+
+// ----------------------------------------------
+// Recorder: extends ConsoleInput to record responses.
+// export class Recorder extends ConsoleInput {
+//   private records: Array<{ key: string; prompt: string; answer: string }> = [];
+//
+//   async yesNo(id: string, prompt: string): Promise<boolean> {
+//     const message = chalk.blue(`${prompt} 'y': Yes, 'n': No`);
+//     const {answer} = await inquirer.prompt([
+//       {
+//         type: 'input',
+//         name: 'answer',
+//         message: message,
+//       },
+//     ]);
+//     const trimmed = answer.trim();
+//     this.records.push({
+//       key: id,
+//       prompt: prompt.replace(/\n/g, ''),
+//       answer: trimmed,
+//     });
+//     return trimmed === '' || trimmed.toLowerCase() === 'y';
+//   }
+//
+//   async yesNoSelect(id: string, prompt: string): Promise<string> {
+//     const message = chalk.green(`${prompt} 'y': Yes, 'n': Skip, 's': Select`);
+//     const {answer} = await inquirer.prompt([
+//       {
+//         type: 'input',
+//         name: 'answer',
+//         message: message,
+//       },
+//     ]);
+//     const trimmed = answer.trim();
+//     this.records.push({
+//       key: id,
+//       prompt: prompt.replace(/\n/g, ''),
+//       answer: trimmed,
+//     });
+//     if (trimmed === '' || trimmed.toLowerCase() === 'y') return 'y';
+//     else if (trimmed.toLowerCase() === 's') return 's';
+//     else return 'n';
+//   }
+//
+//   public getRecords(): Array<{ key: string; prompt: string; answer: string }> {
+//     return this.records;
+//   }
+// }
+
+// ----------------------------------------------
+// MapRecorder: extends ConsoleInput and records responses in a map.
+// export class MapRecorder extends ConsoleInput {
+//   private records: Array<{ key: string; answer: string }> = [];
+//
+//   async yesNo(id: string, prompt: string): Promise<boolean> {
+//     const message = chalk.blue(`[${id}]: \n${prompt} 'y': Yes, 'n': No`);
+//     const {answer} = await inquirer.prompt([
+//       {
+//         type: 'input',
+//         name: 'answer',
+//         message: message,
+//       },
+//     ]);
+//     const trimmed = answer.trim();
+//     this.records.push({key: id, answer: trimmed});
+//     return trimmed === '' || trimmed.toLowerCase() === 'y';
+//   }
+//
+//   async yesNoSelect(id: string, prompt: string): Promise<string> {
+//     const message = chalk.green(
+//       `[${id}]: \n${prompt} 'y': Yes, 'n': Skip, 's': Select`
+//     );
+//     const {answer} = await inquirer.prompt([
+//       {
+//         type: 'input',
+//         name: 'answer',
+//         message: message,
+//       },
+//     ]);
+//     const trimmed = answer.trim();
+//     this.records.push({key: id, answer: trimmed});
+//     if (trimmed === '' || trimmed.toLowerCase() === 'y') return 'y';
+//     else if (trimmed.toLowerCase() === 's') return 's';
+//     else return 'n';
+//   }
+//
+//   public getRecords(): Array<{ key: string; answer: string }> {
+//     return this.records;
+//   }
+// }
+
+// ----------------------------------------------
+// Prompt.Factory: static methods to create Input instances.
+export class PromptFactory {
+  // public static console(): Input {
+  //   return new ConsoleInput();
+  // }
+
+  public static yes(): Input {
+    return {
+      async yesNo(_id: string, _prompt: string): Promise<boolean> {
+        return true;
+      },
+      async yesNoSelect(_id: string, _prompt: string): Promise<string> {
+        return 'y';
+      },
+    };
+  }
+
+  public static player(record: string[]): Input {
+    return new Player(record);
+  }
+
+  public static mapPlayer(records: Map<string, string>): Input {
+    return new MapPlayer(records);
+  }
+
+  // public static recorder(): Input {
+  //   return new Recorder();
+  // }
+
+  // public static mapRecorder(): Input {
+  //   return new MapRecorder();
+  // }
+}
+
+/*
+const theme: CustomTheme = {
+  prefix: {
+    idle: colors.cyan('?'),
+    done: colors.green(figures.tick),
+    canceled: colors.red(figures.cross)
+  },
+  style: {
+    disabled: (text: string) => colors.dim(text),
+    active: (text: string) => colors.cyan(text),
+    cancelText: (text: string) => colors.red(text),
+    emptyText: (text: string) => colors.red(text),
+    directory: (text: string) => colors.yellow(text),
+    file: (text: string) => colors.white(text),
+    currentDir: (text: string) => colors.magenta(text),
+    message: (text: string, _status: Status) => colors.bold(text),
+    help: (text: string) => colors.white(text),
+    key: (text: string) => colors.cyan(text)
+  },
+  labels: {
+    disabled: '(not allowed)'
+  },
+  hierarchySymbols: {
+    branch: figures.lineUpDownRight + figures.line,
+    leaf: figures.lineUpRight + figures.line
+  },
+  renderItem(item: IType, context: RenderContext) {
+    const isLast = context.index === context.items.length - 1
+    const linePrefix =
+      isLast && !context.loop
+        ? this.hierarchySymbols.leaf
+        : this.hierarchySymbols.branch
+
+    const isDirectory = !(item instanceof PropScalar)
+    const line = isDirectory
+      ? `${linePrefix} ${item.name}+`
+      : `${linePrefix} ${item.name}`
+
+    // if (item.isDisabled) {
+    //   return this.style.disabled(`${line} ${this.labels.disabled}`)
+    // }
+
+    const baseColor = isDirectory ? this.style.directory : this.style.file
+    const color = context.isActive ? this.style.active : baseColor
+
+    return color(line)
+  }
+}
+*/
+
+
+const promptTheme: PromptTheme = {
+  icon: '!',
+};
+
+interface PromptConfig {
+  message: string,
+  types: IType[],
+  pageSize?: number,
+  loop?: boolean
+  allowCancel?: boolean
+  cancelText?: string
+  expandFn?: (type: IType) => IType[]
+  theme?: PartialDeep<Theme<PromptTheme>>
+}
+
+const ANSI_HIDE_CURSOR = '\x1B[?25l'
+
+type PromptTheme = {};
+
+export const typesPrompt =
+  createPrompt<string | null, PromptConfig>(
+    (config, done) => {
+      const {
+        pageSize = 10,
+        loop = false,
+        allowCancel = false,
+        cancelText = 'Canceled.',
+      } = config
+
+      const [status, setStatus] = useState<Status>('idle')
+      // const theme = makeTheme<CustomTheme>(baseTheme, config.theme)
+      // const prefix = usePrefix({status, theme})
+      const theme = makeTheme(config.theme);
+      const prefix = usePrefix({status})
+
+      const [currentType, setCurrentType] = useState<IType>()
+
+      const items = useMemo(() => config.expandFn(currentType), [currentType])
+
+      const bounds = useMemo(() => {
+        // const first = items.findIndex(item => !item.isDisabled)
+        // const last = items.findLastIndex(item => !item.isDisabled)
+        //
+        // if (first === -1) {
+        return {first: 0, last: 0}
+        // }
+        //
+        // return {first, last}
+      }, [items])
+
+      const [active, setActive] = useState(bounds.first)
+      const activeItem = items[active]
+
+      useKeypress((key, rl) => {
+        const isDirectory = !(activeItem instanceof PropScalar);
+        if (isEnterKey(key)) {
+          /*if (
+            activeItem.isDisabled ||
+            (config.type === 'file' && activeItem.isDirectory()) ||
+            (config.type === 'directory' && !activeItem.isDirectory())
+          ) {
+            return
+          }*/
+
+          setStatus('done')
+          done(activeItem.path())
+        } else if (isSpaceKey(key) && isDirectory) {
+          setCurrentType(activeItem)
+          setActive(bounds.first)
+        } else if (isUpKey(key) || isDownKey(key)) {
+          rl.clearLine(0)
+
+          if (
+            loop ||
+            (isUpKey(key) && active !== bounds.first) ||
+            (isDownKey(key) && active !== bounds.last)
+          ) {
+            const offset = isUpKey(key) ? -1 : 1
+            let next = active
+
+            // do {
+            //   next = (next + offset + items.length) % items.length
+            // } while (items[next].isDisabled)
+
+            setActive(next)
+          }
+        } else if (isBackspaceKey(key)) {
+          setCurrentType(currentType.parent)
+          setActive(bounds.first)
+        } else if (isEscapeKey(key) && allowCancel) {
+          setStatus('canceled')
+          done(null)
+        }
+      })
+
+      const page = usePagination({
+        renderItem: ({item, index, isActive}): string => {
+          const isLast = index === items.length - 1
+          const linePrefix =
+            isLast && !loop
+              ? figures.lineUpRight + figures.line // this.hierarchySymbols.leaf
+              : figures.lineUpDownRight + figures.line // this.hierarchySymbols.branch
+
+          const isScalar = !(item instanceof PropScalar)
+          const line = isScalar
+            ? `${linePrefix} ${item.name}+`
+            : `${linePrefix} ${item.name}`
+
+          // if (item.isDisabled) {
+          //   return this.style.disabled(`${line} ${this.labels.disabled}`)
+          // }
+
+          // const baseColor = isScalar ? this.style.directory : this.style.file
+          // const color = isActive ? this.style.active : baseColor
+          //
+          // return color(line)
+          return line
+        },
+        items,
+        active,
+        // renderItem: ({item, index, isActive}) =>
+        //   theme.renderItem(item, {items, index, isActive, loop}),
+        pageSize,
+        loop
+      })
+
+      const message = theme.style.message(config.message, status)
+
+      if (status === 'canceled') {
+        // return `${prefix} ${message} ${theme.style.cancelText(cancelText)}`
+        return `${prefix} ${message} ${theme.style.message(cancelText, status)}`
+      }
+
+      if (status === 'done') {
+        return `${prefix} ${message} ${theme.style.answer(activeItem.path())}`
+      }
+
+      const header = theme.style.message(currentType?.path() ?? '', status)
+      // const header = theme.style.currentDir(currentType?.path() ?? '')
+
+      const helpTip = useMemo(() => {
+        const helpTipLines = [
+          `${theme.style.key(figures.arrowUp + figures.arrowDown)} navigate, ${theme.style.key('<enter>')} select${allowCancel ? `, ${theme.style.key('<esc>')} cancel` : ''}`,
+          `${theme.style.key('<space>')} open directory, ${theme.style.key('<backspace>')} go back`
+        ]
+
+        const helpTipMaxLength = getMaxLength(helpTipLines)
+        const delimiter = figures.lineBold.repeat(helpTipMaxLength)
+
+        return `${delimiter}\n${helpTipLines.join('\n')}`
+      }, [])
+
+      return `${prefix} ${message}\n${header}\n${!page.length ? theme.style.message('Empty', status) : page}\n${helpTip}${ANSI_HIDE_CURSOR}`
+    })

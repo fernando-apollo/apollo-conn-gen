@@ -1,14 +1,29 @@
+//{
+//  "compilerOptions": {
+//    "target": "ES2024",
+//    "module": "NodeNext",
+//    "esModuleInterop": true,
+//    "forceConsistentCasingInFileNames": true,
+//    "strict": false,
+//    "skipLibCheck": true,
+//    "outDir": "dist",
+//    "sourceMap": true,
+//    "allowSyntheticDefaultImports": true,
+//    "allowImportingTsExtensions": true,
+//    "baseUrl": "./src",
+//  },
+//  "include": ["src"]
+//}
 {
   "compilerOptions": {
-    "target": "ES2024",
-    "module": "NodeNext",
+    "target": "es2016",
+    "module": "commonjs",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
-    "strict": false,
+    "strict": true,
     "skipLibCheck": true,
     "outDir": "dist",
-    "sourceMap": true,
-    "allowSyntheticDefaultImports": true
+    "sourceMap": true
   },
   "include": ["src"]
 }

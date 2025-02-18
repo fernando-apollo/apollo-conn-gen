@@ -1,65 +1,34 @@
-import {IType} from "./parser/nodes/type";
-import ConnectorGen from "./parser/parser";
-import Prompt from "./parser/prompt";
+import Gen from "./parser/gen";
+import fileSelector from 'inquirer-file-selector'
 
-import {expand, select, Separator} from '@inquirer/prompts';
-import _ from "lodash";
+import {typesPrompt} from "./prompts/prompt";
+
+const originalConsole = {
+  log: console.log,
+};
+
 
 async function main(): Promise<void> {
-  const baseURL =
-    '/Users/fernando/Documents/Opportunities/Vodafone/tmf-apis/tmf-specs';
-  const sourceFile = `${baseURL}/TMF637-ProductInventory-v5.0.0.oas.yaml`;
+  console.log = () => {};
 
-  const generator = await ConnectorGen.fromFile(sourceFile, new Prompt());
+  const baseURL =
+    '/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/apollo-connector-gen/src/test/resources/';
+  const sourceFile = `${baseURL}/petstore.yaml`;
+
+  const generator = await Gen.fromFile(sourceFile);
   await generator.visit();
 
-  const paths = Array.from(generator.collected!.keys());
-  const path: string = await select({
-    message: 'Select a path',
-    choices: paths
+  let types = Array.from(generator.paths!.values());
+  const paths = await typesPrompt({
+    message: "Navigate spec and choose types",
+    types,
+    expandFn: type => {
+      if (!type) return types; // top level paths
+      return generator.expand(type)
+    }
   });
 
-  let selected: IType | boolean = generator.collected.get(path)!;
-
-  console.log('selected path: ', selected.describe());
-  let types: IType[] = generator.expand(selected);
-  let child: IType | boolean;
-
-  while (true) {
-    let choices: (string | Separator)[] = types.map(t => t.path());
-    if (child && (child as IType).parent) {
-      choices.push(new Separator());
-      choices.push('Up to: ' + (child as IType).parent.path());
-    }
-
-    let path: string;
-    if (_.isEmpty(choices)) {
-      const parent = (child as IType).parent;
-      path = parent!.path();
-    }
-    else {
-      path = await select({
-        message: `In: ${(child as IType)?.path() ?? selected.path()}`,
-        choices: choices
-      })
-    }
-
-    if (path.startsWith("Up to:")) {
-      const parent = (child as IType).parent;
-      path = parent!.path();
-    }
-
-    child = (selected as IType).find(path as string, Array.from(generator.collected.values()));
-    if (!child) {
-      console.log('Could not find type with path:', path);
-      break;
-    }
-
-    types = (child as IType).expand(generator.getContext());
-    console.log('expanded types: ', types.map(t => t.name));
-  }
-
-  console.log('types', types);
+  console.info('selected :=', paths);
 }
 
-main().then(r => console.log('done'));
+main().then(_r => console.log('done'));

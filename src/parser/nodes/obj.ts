@@ -1,17 +1,21 @@
 import Context from '../context';
 import {trace} from '../../log/trace';
 import {IType, Type} from './type';
-import {SchemaObject} from 'oas/types';
+import {SchemaObject} from 'oas/dist/types';
 import Prop from "./props/prop";
 import Factory from "./factory";
+import Writer from "../io/writer";
+import Naming from "../utils/naming";
+import Ref from "./ref";
+import Arr from "./arr";
+import PropArray from "./props/prop_array";
+import _ from "lodash";
+import Get from "./get";
 
 export default class Obj extends Type {
-  constructor(
-    parent: IType | undefined,
-    name: string,
-    public schema: SchemaObject
-  ) {
+  constructor(parent: IType | undefined, name: string, public schema: SchemaObject) {
     super(parent, name);
+    this.updateName();
   }
 
   describe(): string {
@@ -28,9 +32,9 @@ export default class Obj extends Type {
     context.enter(this);
     trace(context, '-> [obj:visit]', 'in ' + this.name);
 
-    // if (!context.inContextOf(Composed, this)) {
-    //   console.log('In object: ' + (this.name ? this.name : this.getOwner()));
-    // }
+    if (!context.inContextOf("Composed", this)) {
+      console.log('In object: ' + (this.name ? this.name : this.parent?.name));
+    }
 
     this.visitProperties(context);
     this.visited = true;
@@ -41,6 +45,84 @@ export default class Obj extends Type {
 
     trace(context, '<- [obj:visit]', 'out ' + this.name);
     context.leave(this);
+  }
+
+  generate(context: Context, writer: Writer, selection: string[]): void {
+    if (this.props.size === 0) {
+      return;
+    }
+
+    if (context.inContextOf("Response", this)) {
+      writer.append(Naming.genTypeName(this.name));
+      return;
+    }
+
+    context.enter(this);
+    trace(context, '-> [obj::generate]', `-> in: ${this.name}`);
+
+    const sanitised = Naming.genTypeName(this.name);
+    const refName = Naming.getRefName(this.name);
+
+    writer
+      .append('type ')
+      .append(sanitised === refName ? refName : sanitised)
+      .append(' {\n');
+
+    const selected = this.selectedProps(selection);
+    for (const prop of selected) {
+      trace(context, '-> [obj::generate]', `-> property: ${prop.name} (parent: ${prop.parent!.name})`);
+      prop.generate(context, writer, selection);
+    }
+
+    writer.append('}\n\n');
+
+    trace(context, '<- [obj::generate]', `-> out: ${this.name}`);
+    context.leave(this);
+  }
+
+  select(context: Context, writer: Writer, selection: string[]) {
+    trace(context, '-> [ref::select]', `-> in: ${this.name}`);
+
+    const selected = this.selectedProps(selection);
+    for (const prop of selected) {
+      prop.select(context, writer, selection);
+    }
+
+    trace(context, '<- [ref::select]', `-> out: ${this.name}`);
+  }
+
+  private updateName(): void {
+    let name = this.name;
+    // If we are an inline object named "items", try to create a better name.
+    if (!name || name === 'items') {
+      const parent = this.parent;
+      const parentName = parent!.name;
+
+      // if the parent is a reference, we can use the name of the obj itself
+      if (parent instanceof Ref) {
+        name = parentName.replace('ref:', 'obj:');
+      }
+      // else is our parent an array?
+      else if (parent instanceof Arr || parent instanceof PropArray) {
+        // if so, syntethize a name based on the parent name
+        name = _.upperFirst(Naming.genParamName(Naming.getRefName(parentName) + 'Item'));
+      }
+      // if the parent is a response, we can use the operation name and append "Response"
+      else if (parent instanceof Response) {
+        const op = parent.parent as Get;
+        name = op.getGqlOpName() + 'Response';
+      }
+      // if the parent is an object then we can use the parent name
+      else if (parent instanceof Obj) {
+        name = parentName + 'Obj';
+      }
+      // extreme case -- we syntethize an anonymous name
+      else {
+        name = `[anonymous:${this.parent!.name}]`;
+      }
+    }
+
+    this.name = name;
   }
 
   private visitProperties(context: Context): void {
@@ -67,6 +149,8 @@ export default class Obj extends Type {
     for (const [key, schemaValue] of sorted) {
       const prop = Factory.fromProp(context, this, key, schemaValue);
       this.props.set(prop.name, prop);
+
+      // TODO: we should not be adding this twice
       if (!this.children.includes(prop)) {
         this.add(prop);
       }
@@ -125,4 +209,5 @@ export default class Obj extends Type {
     // this.addDependencies(context);
     trace(context, '<- [obj::props]', 'out props ' + this.props.size);
   }
+
 }

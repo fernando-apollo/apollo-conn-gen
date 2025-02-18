@@ -1,9 +1,12 @@
 import Prop from './prop';
 
 import Context from '../../context';
-import { IType } from '../type';
-import { SchemaObject } from 'oas/types';
+import {IType} from '../type';
+import {SchemaObject} from 'oas/dist/types';
 import Factory from "../factory";
+import Writer from "../../io/writer";
+import {trace} from "../../../log/trace";
+import Naming from "../../utils/naming";
 
 export default class PropScalar extends Prop {
   private propType?: IType;
@@ -28,11 +31,25 @@ export default class PropScalar extends Prop {
     context.leave(this);
   }
 
-  propValue(context: Context): string {
-    throw new Error('Method not implemented.');
+  getValue(context: Context): string {
+    return this.type;
   }
 
   describe(): string {
     return 'PropScalar {name: ' + this.name + '}';
   }
+
+  select(context: Context, writer: Writer, selection: string[]) {
+    trace(context, '   [prop:select]', this.name);
+    const sanitised = Naming.sanitiseFieldForSelect(this.name);
+    writer
+      .append(' '.repeat(context.indent + context.stack.length))
+      .append(sanitised)
+      .append('\n');
+
+    for (const child of this.children) {
+      child.select(context, writer, selection);
+    }
+  }
+
 }

@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { Operation } from 'oas/operation';
+import {Operation} from 'oas/dist/operation';
 
 interface Converter {
   convert(input: string): string;
@@ -78,7 +78,7 @@ class FinalFirstUpperCaseConverter extends AbstractConverter {
     super();
   }
   public process(input: string): string {
-    return _.capitalize(input);
+    return _.upperFirst(input);
   }
 }
 
@@ -147,7 +147,8 @@ export default class Naming {
           .filter((p) => p.required && p.in.toLowerCase() !== 'header')
           .map((p) => {
             const paramName = Naming.genParamName(p.name);
-            return `By${_.capitalize(paramName)}`;
+            const result = `By${_.upperFirst(paramName)}`;
+            return result;
           })
       : [];
 
@@ -156,7 +157,7 @@ export default class Naming {
   }
 
   public static genArrayItems(name: string): string {
-    return _.capitalize(Naming.genParamName(name)) + 'Item';
+    return _.upperFirst(Naming.genParamName(name)) + 'Item';
   }
 
   public static getRefName(ref: string): string {
@@ -178,14 +179,12 @@ export default class Naming {
 
   static capitaliseParts(input: string, splitPattern: RegExp | string): string {
     // If splitPattern is a string, convert it to a RegExp.
-    const regex =
-      typeof splitPattern === 'string'
-        ? new RegExp(splitPattern, 'g')
-        : splitPattern;
+    const regex = typeof splitPattern === 'string' ? new RegExp(splitPattern, 'g') : splitPattern;
+
     // Split the input, capitalize each non-empty part, and join them back together.
     return input
       .split(regex)
-      .map((part) => (part ? _.capitalize(part) : ''))
+      .map((part) => (part ? _.upperFirst(part) : ''))
       .join('');
   }
 }

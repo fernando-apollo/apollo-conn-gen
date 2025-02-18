@@ -1,8 +1,9 @@
 import Context from '../context';
 import { IType, Type } from './type';
-import { SchemaObject } from 'oas/types';
+import { SchemaObject } from 'oas/dist/types';
 import Factory from "./factory";
 import {trace} from "../../log/trace";
+import Writer from "../io/writer";
 
 export default class Res extends Type {
   public schema: SchemaObject;
@@ -42,5 +43,27 @@ export default class Res extends Type {
 
   describe(): string {
     throw new Error('Method not implemented.');
+  }
+
+  public generate(context: Context, writer: Writer, selection: string[]): void {
+    context.enter(this);
+    trace(context, '-> [response:generate]', `-> in: ${this.parent!.name}`);
+
+    if (this.response) {
+      this.response.generate(context, writer, selection);
+    }
+
+    trace(context, '<- [response:generate]', `-> out: ${this.parent!.name}`);
+    context.leave(this);
+  }
+
+  public select(context: Context, writer: Writer, selection: string[]): void {
+    trace(context, '-> [response:select]', `-> in: ${this.parent!.name}`);
+
+    if (this.response) {
+      this.response.select(context, writer, selection);
+    }
+
+    trace(context, '<- [response:select]', `-> out: ${this.parent!.name}`);
   }
 }

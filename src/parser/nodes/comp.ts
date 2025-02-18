@@ -1,9 +1,13 @@
 import {IType, Type} from "./type";
 import Context from "../context";
-import {SchemaObject} from "oas/types";
+import {SchemaObject} from 'oas/dist/types';
+
+;
 import {trace} from "../../log/trace";
 import Prop from "./props/prop";
 import Factory from "./factory";
+import Writer from "../io/writer";
+import Naming from "../utils/naming";
 
 export default class Composed extends Type {
   constructor(parent: IType | undefined, public name: string, public schema: SchemaObject) {
@@ -25,10 +29,9 @@ export default class Composed extends Type {
     trace(context, '-> [composed:visit]', 'in: ' + (this.name == null ? '[object]' : this.name));
 
     // If not in the context of a Composed or Param, log the composed schema.
-    // TODO: pending
-    // if (!context.inContextOf(Composed, this) && !context.inContextOf(Param, this)) {
-    //   console.log('In composed schema: ' + this.name);
-    // }
+    if (!context.inContextOf("Composed", this) && !context.inContextOf("Param", this)) {
+      console.log('In composed schema: ' + this.name);
+    }
 
     const composedSchema = this.schema;
     // this will be a type declaration
@@ -48,6 +51,54 @@ export default class Composed extends Type {
     this.visited = true;
     trace(context, '<- [composed:visit]', 'out: ' + this.name);
     context.leave(this);
+  }
+
+  generate(context: Context, writer: Writer, selection: string[]): void {
+    context.enter(this);
+    trace(context, '-> [comp::generate]', `-> in: ${this.name}`);
+
+    const composedSchema = this.schema;
+    if (composedSchema.oneOf != null) {
+      if (this.children.length > 0) {
+        this.children[0].generate(context, writer, selection);
+      }
+    } else if (composedSchema.allOf != null) {
+      const selected = this.selectedProps(selection);
+      if (selected.length > 0) {
+        writer.write('type ');
+        writer.write(Naming.getRefName(this.name));
+        writer.write(' {\n');
+
+        for (const prop of selected) {
+          trace(context, '   [comp::generate]', `-> property: ${prop.name} (parent: ${prop.parent!.name})`);
+          prop.generate(context, writer, selection);
+        }
+
+        writer.write('}\n\n');
+      }
+    }
+
+    trace(context, '<- [comp::generate]', `-> out: ${this.name}`);
+    context.leave(this);
+  }
+
+  select(context: Context, writer: Writer, selection: string[]) {
+    trace(context, '-> [comp::select]', `-> in: ${this.name}`);
+
+    const composedSchema = this.schema;
+    if (composedSchema.allOf != null) {
+      for (const prop of this.props.values()) {
+        prop.select(context, writer, selection);
+      }
+    } else if (composedSchema.oneOf != null) {
+      if (this.children.length === 1) {
+        this.children[0].select(context, writer, selection);
+      } else {
+        throw new Error('Expected exactly one child for a oneOf schema');
+      }
+    }
+
+    trace(context, '<- [comp::select]', `-> out: ${this.name}`);
   }
 
   private visitAllOfNode(context: Context, schema: SchemaObject): void {

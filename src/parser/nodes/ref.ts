@@ -1,12 +1,15 @@
 import Context from '../context';
 import { IType, Type } from './type';
-import { SchemaObject } from 'oas/types';
+import { SchemaObject } from 'oas/dist/types';
 import { ReferenceObject } from './props/types';
 import {trace} from "../../log/trace";
 import Factory from "./factory";
+import Naming from "../utils/naming";
+import Writer from "../io/writer";
+import Arr from "./arr";
 
 export default class Ref extends Type {
-  private refType: IType;
+  private refType?: IType;
 
   constructor(
     parent: IType | undefined,
@@ -17,7 +20,7 @@ export default class Ref extends Type {
   }
 
   get id(): string {
-    return 'ref:' + this.schema.$ref;
+    return 'ref:' + this.schema?.$ref;
   }
 
   describe(): string {
@@ -27,10 +30,10 @@ export default class Ref extends Type {
   visit(context: Context): void {
     // console.log('schema', this.schema);
     if (this.visited) return;
-    const ref = this.schema.$ref;
+    const ref = this.schema?.$ref ?? '';
 
     context.enter(this);
-    trace(context, '-> [ref:visit]', 'in: ' + this.schema.$ref);
+    trace(context, '-> [ref:visit]', 'in: ' + ref);
 
     const schema: SchemaObject | null = context.lookupRef(ref);
     if (!schema) {
@@ -45,5 +48,33 @@ export default class Ref extends Type {
     this.visited = true;
     trace(context, '<- [ref:visit]', 'out: ' + ref);
     context.leave(this);
+  }
+
+  public generate(context: Context, writer: Writer, selection: string[]): void {
+    context.enter(this);
+    trace(context, '-> [ref::generate]', `-> in: ${this.name}`);
+
+    // If we're in a Response context and the resolved type is an Arr,
+    // generate it with array notation.
+    if (context.inContextOf("Response", this) && this.refType instanceof Arr) {
+      writer.append('[').append(this.children[0].name).append(']');
+    }
+    else {
+      // Rewrite terrible names to something more sensible.
+      const sanitised = Naming.genTypeName(this.name);
+      const refName = Naming.getRefName(this.name);
+      writer.write(sanitised === refName ? refName : sanitised);
+    }
+
+    trace(context, '<- [ref::generate]', `-> out: ${this.name}`);
+    context.leave(this);
+  }
+
+  select(context: Context, writer: Writer, selection: string[]) {
+    trace(context, '-> [ref::select]', `-> in: ${this.name}`);
+    if (this.refType) {
+      this.refType.select(context, writer, selection);
+    }
+    trace(context, '<- [ref::select]', `-> out: ${this.name}`);
   }
 }

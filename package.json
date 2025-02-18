@@ -4,18 +4,26 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "jest"
   },
   "dependencies": {
+    "@inquirer/checkbox": "^4.1.1",
+    "@inquirer/core": "^10.1.7",
     "@inquirer/prompts": "^7.3.1",
+    "inquirer-file-selector": "^0.6.1",
     "lodash": "^4.17.21",
     "oas": "^25.3.0",
-    "oas-normalize": "^12.1.0"
+    "oas-normalize": "^12.1.0",
+    "rc-tree": "^5.13.0",
+    "yoctocolors": "^2.1.1"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
+    "@types/jest": "^29.5.14",
     "@types/lodash": "^4.17.15",
     "openapi-types": "^12.1.3",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.3"
   },

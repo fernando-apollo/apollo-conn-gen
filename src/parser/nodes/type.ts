@@ -19,7 +19,7 @@ export interface IType {
 
   visit(context: Context): void;
 
-  generate(context: Context, writer: Writer): void;
+  generate(context: Context, writer: Writer, selection: string[]): void;
 
   pathToRoot(): string;
 
@@ -28,15 +28,17 @@ export interface IType {
   expand(context: Context): IType[];
 
   find(path: string, collection: Array<IType>): IType | boolean;
+
+  select(context: Context, writer: Writer, selection: string[]): void;
 }
 
 export abstract class Type implements IType {
-  parent?: IType;
-  name: string;
-  children: IType[];
+  public parent?: IType;
+  public name: string;
+  public children: IType[];
   circularRef?: IType;
-  props: Map<string, Prop>;
-  visited: boolean;
+  public props: Map<string, Prop>;
+  public visited: boolean;
 
   protected constructor(parent: IType | undefined, name: string) {
     this.parent = parent;
@@ -49,6 +51,8 @@ export abstract class Type implements IType {
   abstract visit(context: Context): void;
 
   abstract describe(): string;
+
+  abstract select(context: Context, writer: Writer, selection: string[]): void;
 
   find(path: string, collection: Array<IType>): IType | boolean {
     let found: IType | boolean = false;
@@ -97,13 +101,9 @@ export abstract class Type implements IType {
     // }
   }
 
-  generate(context: Context, writer: Writer): void {
-    throw new Error("Method not implemented.");
-  }
+  abstract generate(context: Context, writer: Writer, selection: string[]): void;
 
-  get id() {
-    return this.name;
-  }
+  get id() { return this.name; }
 
   ancestors(): IType[] {
     const result: Array<IType> = [];
@@ -171,5 +171,10 @@ export abstract class Type implements IType {
       callback(node);
       queue.push(...node.children);
     }
+  }
+
+  protected selectedProps(selection: string[]) {
+    return Array.from(this.props.values())
+      .filter((prop) => selection.find(s => s.startsWith(prop.path())));
   }
 }
