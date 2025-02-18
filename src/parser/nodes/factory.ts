@@ -25,6 +25,7 @@ import ArraySchemaObject = OpenAPIV3.ArraySchemaObject;
 import PropScalar from "./props/prop_scalar";
 import Param from "./param/param";
 import En from "./en";
+import CircularRef from "./circular_ref";
 
 export default class Factory {
   public static createGet(name: string, op: Operation): Get {
@@ -114,7 +115,7 @@ export default class Factory {
       if (type === "array") {
         const array = new PropArray(parent, propertyName, schema);
         const itemsName = Naming.genArrayItems(propertyName);
-        array.items = Factory.fromProp(context, array, itemsName, schema.items as ArraySchemaObject);
+        array.setItems(Factory.fromProp(context, array, itemsName, schema.items as ArraySchemaObject));
         prop = array;
       }
       // 2nd checks for obj property
@@ -163,5 +164,9 @@ export default class Factory {
     const required = p.required === true;
 
     return new Param(parent, p.name, schema, required, schema.default, p);
+  }
+
+  public static fromCircularRef(parent: IType, child: IType): IType {
+    return new CircularRef(parent, child);
   }
 }

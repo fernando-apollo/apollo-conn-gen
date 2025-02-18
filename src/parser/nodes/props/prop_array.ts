@@ -1,13 +1,13 @@
 import Prop from './prop';
 
 import Context from '../../context';
-import { trace } from '../../../log/trace';
+import {trace} from '../../../log/trace';
 import PropRef from './prop_ref';
-import { IType } from '../type';
+import {IType} from '../type';
 import PropObj from './prop_obj';
-import { SchemaObject } from 'oas/dist/types';
 import Writer from "../../io/writer";
 import Naming from "../../utils/naming";
+import Factory from "../factory";
 
 export default class PropArray extends Prop {
   public items?: Prop;
@@ -30,8 +30,29 @@ export default class PropArray extends Prop {
     context.leave(this);
   }
 
+  /*
+  public override getValue(context: Context): string {
+    return `[${this.getItems().getValue(context)}]`;
+  }
+   */
   public override getValue(context: Context): string {
     return `[${this.items!.getValue(context)}]`;
+  }
+
+  public add(child: IType): void {
+    const paths: IType[] = this.ancestors();
+    const contains: boolean = paths.includes(child);
+
+    trace(null, '-> [prop-array:add]', 'contains child? ' + contains);
+
+    if (contains) {
+      const ancestor: IType = paths[paths.indexOf(child)];
+      const wrapper: IType = Factory.fromCircularRef(this, ancestor);
+      super.add(wrapper);
+      this.visited = true;
+    } else {
+      super.add(child);
+    }
   }
 
   describe(): string {
@@ -71,5 +92,12 @@ export default class PropArray extends Prop {
 
   needsBrackets(child: IType): boolean {
     return child instanceof PropRef || child instanceof PropObj;
+  }
+
+  public setItems(items: Prop): void {
+    if (!this.children.includes(items)) {
+      this.items = items;
+      this.add(items);
+    }
   }
 }

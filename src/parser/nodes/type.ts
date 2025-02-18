@@ -13,7 +13,7 @@ export interface IType {
 
   describe(): string;
 
-  add(node: IType): void;
+  add(child: IType): void;
 
   ancestors(): IType[];
 
@@ -139,39 +139,41 @@ export abstract class Type implements IType {
     return builder;
   }
 
-  add = (node: IType): void => {
-    this.children.push(node);
+  public add(child: IType): void {
+    this.children.push(child);
   };
 
-  remove = (value: IType): void => {
-    const index = this.children.findIndex(child => child === value);
-    if (index !== -1) {
-      this.children.splice(index, 1);
-    }
-  };
-
-  traverse = (callback: (node: IType) => void, context: Context): void => {
-    const traverseNode = (node: IType): void => {
-      context.enter(node);
-      callback(node);
-      for (const child of node.children) {
-        traverseNode(child);
+  /*
+    remove = (value: IType): void => {
+      const index = this.children.findIndex(child => child === value);
+      if (index !== -1) {
+        this.children.splice(index, 1);
       }
-      context.leave(node);
     };
 
-    traverseNode(this);
-  };
+    traverse = (callback: (node: IType) => void, context: Context): void => {
+      const traverseNode = (node: IType): void => {
+        context.enter(node);
+        callback(node);
+        for (const child of node.children) {
+          traverseNode(child);
+        }
+        context.leave(node);
+      };
 
-  traverseBreadthFirst(callback: (node: IType) => void): void {
-    const queue: IType[] = [this];
+      traverseNode(this);
+    };
 
-    while (queue.length > 0) {
-      const node = queue.shift()!;
-      callback(node);
-      queue.push(...node.children);
+    traverseBreadthFirst(callback: (node: IType) => void): void {
+      const queue: IType[] = [this];
+
+      while (queue.length > 0) {
+        const node = queue.shift()!;
+        callback(node);
+        queue.push(...node.children);
+      }
     }
-  }
+  */
 
   protected selectedProps(selection: string[]) {
     return Array.from(this.props.values())

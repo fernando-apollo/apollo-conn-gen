@@ -38,6 +38,42 @@ test('test minimal petstore', async () => {
   expect(output).toBeUndefined();
 });
 
+test('test minimal petstore 02', async () => {
+  expect(fs.existsSync(`${base}/petstore.yaml`)).toBeTruthy();
+
+  let file = fs.readFileSync(`${base}/petstore.yaml`);
+  expect(file).toBeDefined();
+
+  const paths = [
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:id',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:name',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:id',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:name',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls>prop:scalar:PhotoUrlsItem',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status'
+  ]
+
+  const gen = await Gen.fromFile(`${base}/petstore.yaml`);
+  await gen.visit();
+
+  expect(gen.paths).toBeDefined();
+  expect(gen.paths.size).toBe(8);
+
+  const writer: Writer = new Writer(gen);
+  writer.generate(paths);
+  const schema = writer.flush();
+  expect(schema).toBeDefined();
+
+  const schemaFile = path.join(os.tmpdir(), 'test_001_testMinimalPetstore.graphql');
+  fs.writeFileSync(schemaFile, schema, { encoding: 'utf-8', flag: 'w' });
+
+  const [result, output] = compose(schemaFile);
+  expect(result).toBeTruthy();
+  expect(output).toBeUndefined();
+});
+
 
 /// rover checks
 function isRoverAvailable(command: string): [boolean, string?] {

@@ -6,6 +6,7 @@ import Oas from "oas";
 import _ from "lodash";
 import Get from "../nodes/get";
 import Param from "../nodes/param/param";
+import Prop from "../nodes/props/prop";
 
 export default class Writer {
   buffer: string[];
@@ -215,7 +216,7 @@ export default class Writer {
       }
 
       if (found) {
-        let parentType = (parent as IType).parent!;
+        let parentType = Writer.findNonPropParent(found as IType);
         if (!pending.has(parentType.path())) {
           pending.set(parentType.path(), parentType);
         }
@@ -225,6 +226,14 @@ export default class Writer {
     if (!_.isEmpty(pending)) {
       this.writeSchema(this, pending, selection);
     }
+  }
+
+  static findNonPropParent(type: IType) {
+    let parent = type;
+    while (parent instanceof Prop) {
+      parent = parent.parent!;
+    }
+    return parent;
   }
 
   static progressiveSplits(input: string): string[] {
