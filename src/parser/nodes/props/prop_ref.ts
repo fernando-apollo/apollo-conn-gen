@@ -10,6 +10,9 @@ import Naming from "../../utils/naming";
 import Arr from "../arr";
 import Obj from "../obj";
 import Composed from "../comp";
+import {RenderContext} from "../../../prompts/theme";
+import Union from "../union";
+import CircularRef from "../circular_ref";
 
 export default class PropRef extends Prop {
   private refType?: IType;
@@ -91,8 +94,8 @@ export default class PropRef extends Prop {
     return Naming.genTypeName(name!);
   }
 
-  describe(): string {
-    throw new Error('Method not implemented.');
+  forPrompt(context: Context): string {
+    return `${this.name}: ${Naming.getRefName(this.ref)} (Ref)`;
   }
 
   select(context: Context, writer: Writer, selection: string[]) {
@@ -129,11 +132,9 @@ export default class PropRef extends Prop {
     }
     return (
       child instanceof Obj ||
-      // TODO: fix this
-      // child instanceof Union ||
-      child instanceof Composed // ||
-      // TODO: fix this
-      //child instanceof CircularRef
+      child instanceof Union ||
+      child instanceof Composed ||
+      child instanceof CircularRef
     );
   }
 }

@@ -8,6 +8,8 @@ import Naming from "../../utils/naming";
 import Obj from "../obj";
 import Composed from "../comp";
 import PropRef from "./prop_ref";
+import {RenderContext} from "../../../prompts/theme";
+import Union from "../union";
 
 export default class PropObj extends Prop {
   constructor(parent: IType, name: string, public schema: SchemaObject, public obj: IType) {
@@ -35,8 +37,9 @@ export default class PropObj extends Prop {
     trace(context, '<- [prop-obj:visit]', 'out ' + this.name + ', obj: ' + this.obj.name);
     context.leave(this);
   }
-  describe(): string {
-    throw new Error('Method not implemented.');
+
+  forPrompt(context: Context): string {
+    return this.name + ': ' + Naming.getRefName(this.obj.name) + " (Obj)";
   }
 
   getValue(context: Context): string {
@@ -76,8 +79,7 @@ export default class PropObj extends Prop {
   private needsBrackets(child: IType): boolean {
     return (
       child instanceof Obj ||
-      // TODO: fix this
-      // child instanceof Union ||
+      child instanceof Union ||
       child instanceof Composed
     );
   }

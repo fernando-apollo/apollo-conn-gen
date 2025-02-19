@@ -6,6 +6,7 @@ import {OpenAPIV3} from "openapi-types";
 import Factory from "./factory";
 import {trace} from "../../log/trace";
 import Writer from '../io/writer';
+import {RenderContext} from "../../prompts/theme";
 
 export default class Arr extends Type {
   public itemsType?: IType;
@@ -32,7 +33,7 @@ export default class Arr extends Type {
     context.leave(this);
   }
 
-  describe(): string {
+  forPrompt(context: Context): string {
     return `Array {name: ${this.name}}`;
   }
 

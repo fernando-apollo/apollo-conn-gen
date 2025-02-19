@@ -14,6 +14,7 @@ import Factory from './factory';
 import Naming from "../utils/naming";
 import Writer from '../io/writer';
 import Param from "./param/param";
+import {RenderContext} from "../../prompts/theme";
 
 export default class Get extends Type {
   public resultType?: IType;
@@ -47,8 +48,8 @@ export default class Get extends Type {
     context.leave(this);
   }
 
-  describe(): string {
-    return `Get{name: ${this.name}}`;
+  forPrompt(context: Context): string {
+    return `[GET] ${this.name}`;
   }
 
   generate(context: Context, writer: Writer, selection: string[]): void {

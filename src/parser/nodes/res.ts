@@ -4,6 +4,7 @@ import { SchemaObject } from 'oas/dist/types';
 import Factory from "./factory";
 import {trace} from "../../log/trace";
 import Writer from "../io/writer";
+import {RenderContext} from "../../prompts/theme";
 
 export default class Res extends Type {
   public schema: SchemaObject;
@@ -41,8 +42,8 @@ export default class Res extends Type {
     context.leave(this);
   }
 
-  describe(): string {
-    throw new Error('Method not implemented.');
+  forPrompt(context: Context): string {
+    return "Response";
   }
 
   public generate(context: Context, writer: Writer, selection: string[]): void {

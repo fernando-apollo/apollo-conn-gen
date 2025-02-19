@@ -2,6 +2,7 @@ import Context from "../context";
 import Prop from "./props/prop";
 import Writer from "../io/writer";
 import {trace} from "../../log/trace";
+import {RenderContext} from "../../prompts/theme";
 
 export interface IType {
   name: string;
@@ -11,7 +12,7 @@ export interface IType {
   props: Map<string, Prop>;
   id: string;
 
-  describe(): string;
+  forPrompt(context: Context): string;
 
   add(child: IType): void;
 
@@ -50,7 +51,7 @@ export abstract class Type implements IType {
 
   abstract visit(context: Context): void;
 
-  abstract describe(): string;
+  abstract forPrompt(context: Context): string;
 
   abstract select(context: Context, writer: Writer, selection: string[]): void;
 

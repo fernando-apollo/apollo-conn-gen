@@ -7,6 +7,7 @@ import Factory from "../factory";
 import Writer from "../../io/writer";
 import {trace} from "../../../log/trace";
 import Naming from "../../utils/naming";
+import {RenderContext} from "../../../prompts/theme";
 
 export default class PropScalar extends Prop {
   private propType?: IType;
@@ -35,8 +36,8 @@ export default class PropScalar extends Prop {
     return this.type;
   }
 
-  describe(): string {
-    return 'PropScalar {name: ' + this.name + '}';
+  forPrompt(context: Context): string {
+    return `${this.name}: ${this.type}`;
   }
 
   select(context: Context, writer: Writer, selection: string[]) {

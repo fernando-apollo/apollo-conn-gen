@@ -1,5 +1,6 @@
 import {IType} from "../parser/nodes/type";
 import {Status} from "@inquirer/core";
+import Context from "../parser/context";
 
 export type RenderContext = {
   /**
@@ -22,6 +23,10 @@ export type RenderContext = {
    * List of selected paths
    */
   selected: string[]
+  /**
+   * The Context used by the parser
+   */
+  context: Context
 }
 
 export interface CustomTheme {

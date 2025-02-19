@@ -8,43 +8,17 @@ import {execSync, spawnSync} from 'child_process';
 const base = "/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/apollo-connector-gen/src/test/resources/"
 
 test('test minimal petstore', async () => {
-  expect(fs.existsSync(`${base}/petstore.yaml`)).toBeTruthy();
-
-  let file = fs.readFileSync(`${base}/petstore.yaml`);
-  expect(file).toBeDefined();
-
   const paths = [
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id',
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name',
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:name'
   ]
 
-  const gen = await Gen.fromFile(`${base}/petstore.yaml`);
-  await gen.visit();
-
-  expect(gen.paths).toBeDefined();
-  expect(gen.paths.size).toBe(8);
-
-  const writer: Writer = new Writer(gen);
-  writer.generate(paths);
-  const schema = writer.flush();
-  expect(schema).toBeDefined();
-
-  const schemaFile = path.join(os.tmpdir(), 'test_001_testMinimalPetstore.graphql');
-  fs.writeFileSync(schemaFile, schema, { encoding: 'utf-8', flag: 'w' });
-
-  const [result, output] = compose(schemaFile);
-  expect(result).toBeTruthy();
-  expect(output).toBeUndefined();
+  await run(`petstore.yaml`, paths, 8, 2);
 });
 
 test('test minimal petstore 02', async () => {
-  expect(fs.existsSync(`${base}/petstore.yaml`)).toBeTruthy();
-
-  let file = fs.readFileSync(`${base}/petstore.yaml`);
-  expect(file).toBeDefined();
-
-  const paths = [
+    const paths = [
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:id',
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:name',
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:id',
@@ -55,25 +29,145 @@ test('test minimal petstore 02', async () => {
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status'
   ]
 
-  const gen = await Gen.fromFile(`${base}/petstore.yaml`);
+  await run(`petstore.yaml`, paths, 8, 3);
+});
+
+test('test minimal petstore 03 array', async () => {
+  const paths = [
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls',
+  ]
+
+  await run(`petstore.yaml`, paths, 8, 1);
+});
+
+test('test full petstore', async () => {
+  expect(fs.existsSync(`${base}/petstore.yaml`)).toBeTruthy();
+
+  let file = fs.readFileSync(`${base}/petstore.yaml`);
+  expect(file).toBeDefined();
+
+  const paths = [
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:id',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:name',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:id',
+    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:name',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:id',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:name',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:id',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:name',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:id',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:name',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:id',
+    'get:/pet/findByTags>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:name',
+    'get:/store/order/{orderId}>res:r>ref:#/c/s/Order>obj:#/c/s/Order>prop:scalar:complete',
+    'get:/store/order/{orderId}>res:r>ref:#/c/s/Order>obj:#/c/s/Order>prop:scalar:id',
+    'get:/store/order/{orderId}>res:r>ref:#/c/s/Order>obj:#/c/s/Order>prop:scalar:petId',
+    'get:/store/order/{orderId}>res:r>ref:#/c/s/Order>obj:#/c/s/Order>prop:scalar:quantity',
+    'get:/store/order/{orderId}>res:r>ref:#/c/s/Order>obj:#/c/s/Order>prop:scalar:shipDate',
+    'get:/store/order/{orderId}>res:r>ref:#/c/s/Order>obj:#/c/s/Order>prop:scalar:status',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:email',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:firstName',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:id',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:lastName',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:password',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:phone',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:username',
+    'get:/user/{username}>res:r>ref:#/c/s/User>obj:#/c/s/User>prop:scalar:userStatus'
+  ]
+
+  await run(`petstore.yaml`, paths, 8, 5);
+});
+
+test('test_003_testConsumerJourney', async () => {
+  const paths = [
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:firstName',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:lastName'
+  ]
+
+  await run("js-mva-consumer-info_v1.yaml", paths, 1, 2);
+});
+
+test('test_004_testConsumerJourneyScalarsOnly', async () => {
+  const paths = [
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:birthDate',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:firstName',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:gender',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:lastName',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:me',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:taxIdentifier',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:title',
+  ]
+
+  await run("js-mva-consumer-info_v1.yaml", paths, 1, 2);
+});
+
+test('test_004_testAccountSegment', async () => {
+  const paths = [
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:array:#accounts>prop:ref:#AccountsItem>obj:#/c/s/Account>prop:ref:#segment>obj:#/c/s/SegmentCharacteristic>prop:scalar:category',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:firstName',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:gender'
+  ]
+
+  await run("js-mva-consumer-info_v1.yaml", paths, 1, 4);
+});
+test('test_005_testHomepageProductSelector', async () => {
+  const paths = [
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:activationDate',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:contractEndDate',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:description',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:deviceCounter',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:hasUsage',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:id',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:isBundle',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:isBundled',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:isOneNumber',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:name',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:phoneNumber',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:price',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:renewalDate',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:serviceId',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:speed',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:status',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:type'
+  ]
+
+  await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 1);
+});
+
+// run test
+async function run(file: string, paths: string[], pathsSize: number, typesSize: number) {
+  const gen = await Gen.fromFile(`${base}/${file}`);
   await gen.visit();
 
   expect(gen.paths).toBeDefined();
-  expect(gen.paths.size).toBe(8);
+  expect(gen.paths.size).toBe(pathsSize);
 
   const writer: Writer = new Writer(gen);
   writer.generate(paths);
+  expect(gen.context?.types.size).toBe(typesSize);
+
   const schema = writer.flush();
   expect(schema).toBeDefined();
 
-  const schemaFile = path.join(os.tmpdir(), 'test_001_testMinimalPetstore.graphql');
+  const schemaFile = path.join(os.tmpdir(), file.replace(/yaml|json|yml/, "graphql"));
   fs.writeFileSync(schemaFile, schema, { encoding: 'utf-8', flag: 'w' });
 
   const [result, output] = compose(schemaFile);
   expect(result).toBeTruthy();
   expect(output).toBeUndefined();
-});
-
+}
 
 /// rover checks
 function isRoverAvailable(command: string): [boolean, string?] {

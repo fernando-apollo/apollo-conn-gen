@@ -7,6 +7,10 @@ import _ from "lodash";
 import Get from "../nodes/get";
 import Param from "../nodes/param/param";
 import Prop from "../nodes/props/prop";
+import Obj from "../nodes/obj";
+import Union from "../nodes/union";
+import Composed from "../nodes/comp";
+import CircularRef from "../nodes/circular_ref";
 
 export default class Writer {
   buffer: string[];
@@ -31,7 +35,6 @@ export default class Writer {
     return result;
   }
 
-  // TODO: implement this
   public writeSchema(writer: Writer, pending: Map<string, IType>, selection: string[]): void {
     const context = this.generator.context!;
     const generatedSet = context.generatedSet;
@@ -41,8 +44,10 @@ export default class Writer {
     this.writeJSONScalar(writer);
 
     pending.forEach((type: IType, _key: string) => {
-      type.generate(context, this, selection);
-      generatedSet.add(type.path());
+      if (!generatedSet.has(type.path())) {
+        type.generate(context, this, selection);
+        generatedSet.add(type.path());
+      }
     });
 
     // TODO: Pending
@@ -150,15 +155,13 @@ export default class Writer {
         spacing = ' '.repeat(6);
         builder += spacing + ']';
       }
-    }
-    else {
+    } else {
       builder += '"';
     }
 
     return `{ GET: ${builder} }`;
   }
 
-  // TODO: implement this
   private writeSelection(context: Context, writer: Writer, type: IType, selection: string[]): void {
     context.indent = 6;
     type.select(context, writer, selection);
@@ -217,9 +220,17 @@ export default class Writer {
 
       if (found) {
         let parentType = Writer.findNonPropParent(found as IType);
-        if (!pending.has(parentType.path())) {
-          pending.set(parentType.path(), parentType);
+
+        if (!pending.has(parentType.id)) {
+          pending.set(parentType.id, parentType);
         }
+
+        parentType.ancestors()
+          .filter(t => !pending.has(t.id) && this.isContainer(t))
+          .forEach(dep => {
+            // TODO: potential merge needed?
+            pending.set(dep.id, dep);
+          })
       }
     }
 
@@ -243,5 +254,14 @@ export default class Writer {
       results.push(parts.slice(0, i).join(">"));
     }
     return results;
+  }
+
+  private isContainer(type: IType) {
+    return (
+      type instanceof Obj ||
+      type instanceof Union ||
+      type instanceof Composed ||
+      type instanceof CircularRef
+    )
   }
 }

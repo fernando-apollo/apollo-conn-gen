@@ -6,7 +6,7 @@ import {
   isDownKey,
   isEnterKey,
   isSpaceKey,
-  isUpKey,
+  isUpKey, KeypressEvent,
   makeTheme,
   type Status,
   Theme,
@@ -24,6 +24,8 @@ import {CustomTheme, RenderContext} from "./theme";
 import {IType} from "../parser/nodes/type";
 import PropScalar from "../parser/nodes/props/prop_scalar";
 import {getMaxLength, isEscapeKey} from "./base/utils";
+import PropArray from "../parser/nodes/props/prop_array";
+import Context from "../parser/context";
 
 const baseTheme: CustomTheme = {
   prefix: {
@@ -58,12 +60,14 @@ const baseTheme: CustomTheme = {
         ? this.hierarchySymbols.leaf
         : this.hierarchySymbols.branch
 
-    const canBeExpanded = !(item instanceof PropScalar)
-    let line = canBeExpanded
-      ? `${item.name} ${figures.triangleRight}`
-      : `${item.name}`
+    const isLeaf = item instanceof PropScalar ||
+      (item instanceof PropArray && item.items instanceof PropScalar)
 
-    if (!canBeExpanded) {
+    let line = !isLeaf
+      ? `${item.forPrompt(context.context)} ${figures.triangleRight}`
+      : `${item.forPrompt(context.context)}`
+
+    if (isLeaf) {
       line = context.selected.includes(item.path())
         ? `${figures.radioOn} ${line}`
         : `${figures.radioOff} ${line}`
@@ -71,7 +75,7 @@ const baseTheme: CustomTheme = {
 
     line = `${linePrefix} ${line}`
 
-    const baseColor = canBeExpanded ? this.style.directory : this.style.file
+    const baseColor = !isLeaf ? this.style.directory : this.style.file
     const color = context.isActive ? this.style.active : baseColor
 
     return color(line)
@@ -80,6 +84,7 @@ const baseTheme: CustomTheme = {
 
 interface PromptConfig {
   message: string,
+  context: Context,
   types: IType[],
   pageSize?: number,
   loop?: boolean
@@ -137,9 +142,11 @@ export const typesPrompt =
             setSelected([...selected, activeItem.path()]);
 
         } else {
-          let canBeExpanded = !(activeItem instanceof PropScalar);
+          // let canBeExpanded = !(activeItem instanceof PropScalar);
+          const isLeaf = activeItem instanceof PropScalar ||
+            (activeItem instanceof PropArray && activeItem.items instanceof PropScalar)
 
-          if (isSpaceKey(key) && canBeExpanded) {
+          if ((isSpaceKey(key) || isRightKey(key)) && !isLeaf) {
             setCurrent(activeItem)
             setActive(bounds.first)
           }
@@ -156,7 +163,7 @@ export const typesPrompt =
               next = (next + offset + items.length) % items.length
               setActive(next)
             }
-          } else if (isBackspaceKey(key)) {
+          } else if (isBackspaceKey(key) || isLeftKey(key)) {
             setCurrent(current?.parent)
             setActive(bounds.first)
           } else if (isEscapeKey(key) && allowCancel) {
@@ -170,7 +177,7 @@ export const typesPrompt =
         items,
         active,
         renderItem: ({item, index, isActive}) =>
-          theme.renderItem(item, {items, index, isActive, loop, selected}),
+          theme.renderItem(item, {items, index, isActive, loop, selected, context: config.context}),
         pageSize,
         loop
       })
@@ -203,3 +210,15 @@ export const typesPrompt =
       return `${prefix} ${message}\n${header}\n${!page.length ? theme.style.emptyText('emptyText') : page}\n${helpTip}${ANSI_HIDE_CURSOR}`
     }
   )
+
+const isLeftKey = (key: KeypressEvent): boolean =>
+  // The up key
+  key.name === 'left' ||
+  // Vim keybinding
+  key.name === 'j';
+
+const isRightKey = (key: KeypressEvent): boolean =>
+  // The up key
+  key.name === 'right' ||
+  // Vim keybinding
+  key.name === 'l';

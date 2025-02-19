@@ -11,6 +11,7 @@ import Arr from "./arr";
 import PropArray from "./props/prop_array";
 import _ from "lodash";
 import Get from "./get";
+import {RenderContext} from "../../prompts/theme";
 
 export default class Obj extends Type {
   constructor(parent: IType | undefined, name: string, public schema: SchemaObject) {
@@ -18,8 +19,8 @@ export default class Obj extends Type {
     this.updateName();
   }
 
-  describe(): string {
-    return `Obj{name: ${this.name}}`;
+  forPrompt(context: Context): string {
+    return `${Naming.getRefName(this.name)} (Obj)`;
   }
 
   get id(): string {
@@ -81,14 +82,14 @@ export default class Obj extends Type {
   }
 
   select(context: Context, writer: Writer, selection: string[]) {
-    trace(context, '-> [ref::select]', `-> in: ${this.name}`);
+    trace(context, '-> [obj::select]', `-> in: ${this.name}`);
 
     const selected = this.selectedProps(selection);
     for (const prop of selected) {
       prop.select(context, writer, selection);
     }
 
-    trace(context, '<- [ref::select]', `-> out: ${this.name}`);
+    trace(context, '<- [obj::select]', `-> out: ${this.name}`);
   }
 
   private updateName(): void {
@@ -130,11 +131,7 @@ export default class Obj extends Type {
 
     const properties = this.schema.properties as Record<string, SchemaObject>;
     const propKeys = Object.keys(properties);
-    trace(
-      context,
-      '-> [obj::props]',
-      'in props ' + (propKeys.length === 0 ? '0' : propKeys.length.toString())
-    );
+    trace(context, '-> [obj::props]', 'in props ' + (propKeys.length === 0 ? '0' : propKeys.length.toString()));
 
     if (propKeys.length === 0) {
       trace(context, '<- [obj::props]', 'no props ' + this.props.size);

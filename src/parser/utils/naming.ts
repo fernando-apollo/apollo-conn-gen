@@ -61,6 +61,7 @@ class RemoveRefConverter extends AbstractConverter {
   constructor(converter: Converter) {
     super(converter);
   }
+
   public process(input: string): string {
     let result = input || '';
     if (result.includes('#/components/schemas/')) {

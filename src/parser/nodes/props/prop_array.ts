@@ -8,6 +8,8 @@ import PropObj from './prop_obj';
 import Writer from "../../io/writer";
 import Naming from "../../utils/naming";
 import Factory from "../factory";
+import PropScalar from "./prop_scalar";
+import {RenderContext} from "../../../prompts/theme";
 
 export default class PropArray extends Prop {
   public items?: Prop;
@@ -30,11 +32,13 @@ export default class PropArray extends Prop {
     context.leave(this);
   }
 
-  /*
-  public override getValue(context: Context): string {
-    return `[${this.getItems().getValue(context)}]`;
+  public setItems(items: Prop): void {
+    this.items = items;
+    if (!this.children.includes(items)) {
+      this.add(items);
+    }
   }
-   */
+
   public override getValue(context: Context): string {
     return `[${this.items!.getValue(context)}]`;
   }
@@ -55,8 +59,8 @@ export default class PropArray extends Prop {
     }
   }
 
-  describe(): string {
-    return 'PropScalar {name: ' + this.name + '}';
+  forPrompt(context: Context): string {
+    return `${this.name}: [${this.items!.getValue(context)}]`;
   }
 
   select(context: Context, writer: Writer, selection: string[]) {
@@ -92,12 +96,5 @@ export default class PropArray extends Prop {
 
   needsBrackets(child: IType): boolean {
     return child instanceof PropRef || child instanceof PropObj;
-  }
-
-  public setItems(items: Prop): void {
-    if (!this.children.includes(items)) {
-      this.items = items;
-      this.add(items);
-    }
   }
 }

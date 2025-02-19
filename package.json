@@ -11,6 +11,7 @@
     "@inquirer/checkbox": "^4.1.1",
     "@inquirer/core": "^10.1.7",
     "@inquirer/prompts": "^7.3.1",
+    "commander": "^13.1.0",
     "inquirer-file-selector": "^0.6.1",
     "lodash": "^4.17.21",
     "oas": "^25.3.0",

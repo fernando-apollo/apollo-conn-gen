@@ -7,6 +7,7 @@ import Factory from "./factory";
 import Naming from "../utils/naming";
 import Writer from "../io/writer";
 import Arr from "./arr";
+import {RenderContext} from "../../prompts/theme";
 
 export default class Ref extends Type {
   private refType?: IType;
@@ -23,8 +24,8 @@ export default class Ref extends Type {
     return 'ref:' + this.schema?.$ref;
   }
 
-  describe(): string {
-    return `Ref{name: ${this.name}}`;
+  forPrompt(context: Context): string {
+    return `${Naming.getRefName(this.name)} (Ref)`;
   }
 
   visit(context: Context): void {

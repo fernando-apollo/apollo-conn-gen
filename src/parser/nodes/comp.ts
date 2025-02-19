@@ -8,6 +8,7 @@ import Prop from "./props/prop";
 import Factory from "./factory";
 import Writer from "../io/writer";
 import Naming from "../utils/naming";
+import {RenderContext} from "../../prompts/theme";
 
 export default class Composed extends Type {
   constructor(parent: IType | undefined, public name: string, public schema: SchemaObject) {
@@ -18,7 +19,7 @@ export default class Composed extends Type {
     return `comp:${this.name}`;
   }
 
-  describe(): string {
+  forPrompt(context: Context): string {
     return "";
   }
 
@@ -40,8 +41,7 @@ export default class Composed extends Type {
     }
     // represents a Union type
     else if (composedSchema.oneOf != null) {
-      // TODO: implement
-      // this.visitOneOfNode(context, composedSchema);
+      this.visitOneOfNode(context, composedSchema);
     }
     // can't hand this yet
     else {
@@ -138,5 +138,24 @@ export default class Composed extends Type {
     trace(context, '-> [composed]', 'storing: ' + this.name + ' with: ' + this);
     context.store(this.name, this);
     trace(context, '<- [composed::all-of]', `out: '${this.name}' of: ${allOfs.length} - refs: ${refs}`);
+  }
+
+  private visitOneOfNode(context: Context, schema: SchemaObject): void {
+    const oneOfs = schema.oneOf || [];
+    trace(context, '-> [composed::one-of]', `in: OneOf ${this.name} with size: ${oneOfs.length}`);
+
+    const result = Factory.fromUnion(context, this, oneOfs as SchemaObject[]);
+    if (!result) {
+      throw new Error('Failed to create union type');
+    }
+
+    result.visit(context);
+
+    trace(context, '-> [composed::one-of]', `storing: ${this.name} with: ${this}`);
+    if (this.name != null) {
+      context.store(this.name, this);
+    }
+
+    trace(context, '<- [composed::one-of]', `out: OneOf ${this.name} with size: ${oneOfs.length}`);
   }
 }

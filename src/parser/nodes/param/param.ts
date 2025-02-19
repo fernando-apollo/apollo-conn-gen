@@ -5,6 +5,7 @@ import {IType, Type} from "../type";
 import Context from "../../context";
 import {trace} from "../../../log/trace";
 import Factory from "../factory";
+import {RenderContext} from "../../../prompts/theme";
 
 export default class Param extends Type {
   public resultType!: IType;
@@ -68,7 +69,7 @@ export default class Param extends Type {
     }
   }
 
-  public describe(): string {
+  public forPrompt(context: Context): string {
     return `Param{ name=${this.name}, required=${this.required}, defaultValue=${this.defaultValue}, props=${this.props}, resultType=${this.resultType} }`;
   }
 

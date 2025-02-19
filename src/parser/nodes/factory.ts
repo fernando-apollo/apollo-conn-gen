@@ -26,6 +26,7 @@ import PropScalar from "./props/prop_scalar";
 import Param from "./param/param";
 import En from "./en";
 import CircularRef from "./circular_ref";
+import Union from "./union";
 
 export default class Factory {
   public static createGet(name: string, op: Operation): Get {
@@ -48,7 +49,8 @@ export default class Factory {
         // Assume parent.parent is a GetOp.
         const get = parent.parent as Get;
         parentName = _.upperFirst(get.getGqlOpName());
-      } else {
+      }
+      else {
         console.log('Factory.fromSchema >>> HERE');
       }
       result = new Arr(parent, parentName, schema.items as ArraySchemaObject);
@@ -68,12 +70,9 @@ export default class Factory {
       const typeStr = schema.type;
       if (typeStr != null) {
         if (typeStr === 'array') {
-          throw new Error(
-            `Should have been handled already? ${typeStr}, schema: ${JSON.stringify(
-              schema
-            )}`
-          );
-        } else if (schema.enum != null) {
+          throw new Error(`Should have been handled already? ${typeStr}, schema: ${JSON.stringify(schema)}`);
+        }
+        else if (schema.enum != null) {
           result = new En(parent, schema, (schema as any).enum);
         }
         // scalar case
@@ -84,7 +83,11 @@ export default class Factory {
           throw new Error(`Cannot handle property type ${typeStr}, schema: ${JSON.stringify(schema)}`
           );
         }
-      } else {
+      }
+      else if (schema.enum != null) {
+        result = new En(parent, schema, (schema as any).enum);
+      }
+      else {
         throw new Error(`Cannot handle schema ${parent.pathToRoot()}, schema: ${JSON.stringify(schema)}`);
       }
     }
@@ -114,8 +117,12 @@ export default class Factory {
       // 1st case is if the type is an array
       if (type === "array") {
         const array = new PropArray(parent, propertyName, schema);
+
         const itemsName = Naming.genArrayItems(propertyName);
-        array.setItems(Factory.fromProp(context, array, itemsName, schema.items as ArraySchemaObject));
+        const itemsType = Factory.fromProp(context, array, itemsName, schema.items as ArraySchemaObject);
+
+        array.setItems(itemsType);
+
         prop = array;
       }
       // 2nd checks for obj property
@@ -168,5 +175,11 @@ export default class Factory {
 
   public static fromCircularRef(parent: IType, child: IType): IType {
     return new CircularRef(parent, child);
+  }
+
+  public static fromUnion(_context: Context, parent: IType, oneOfs: SchemaObject[]): IType {
+    const union = new Union(parent, parent.name, oneOfs);
+    parent.add(union);
+    return union;
   }
 }

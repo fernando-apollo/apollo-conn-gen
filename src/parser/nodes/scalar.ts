@@ -3,6 +3,7 @@ import Writer from '../io/writer';
 import {IType, Type} from './type';
 import {SchemaObject} from 'oas/dist/types';
 import {trace} from "../../log/trace";
+import {RenderContext} from "../../prompts/theme";
 
 export class Scalar extends Type {
   visit(_context: Context): void {
@@ -12,7 +13,7 @@ export class Scalar extends Type {
     super(parent, name);
   }
 
-  describe(): string {
+  forPrompt(context: Context): string {
     return `Scalar Node - Name: ${this.name}, Value: ${this.schema}`;
   }
 

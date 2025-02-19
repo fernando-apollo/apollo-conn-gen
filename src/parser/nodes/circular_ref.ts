@@ -5,13 +5,14 @@ import {IType, Type} from "./type";
 import Context from "../context";
 import {trace} from "../../log/trace";
 import Writer from "../io/writer";
+import {RenderContext} from "../../prompts/theme";
 
 export default class CircularRef extends Type {
   constructor(parent: IType, public child: IType) {
     super(parent, child.name);
   }
 
-  describe(): string {
+  forPrompt(context: Context): string {
     return 'CircularRef {child: ' + this.name + '}';
   }
 

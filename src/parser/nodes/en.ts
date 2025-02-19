@@ -4,6 +4,7 @@ import {SchemaObject} from 'oas/dist/types';;
 import {trace} from "../../log/trace";
 import Writer from "../io/writer";
 import GqlUtils from "../utils/gql";
+import {RenderContext} from "../../prompts/theme";
 
 export default class En extends Type {
   constructor(parent: IType, public schema: SchemaObject, public items: string[] = []) {
@@ -20,7 +21,6 @@ export default class En extends Type {
     context.enter(this);
     trace(context, '-> [enum:visit]', 'in: ' + this.items.toString());
 
-    // TODO: Store this type if it's not in the context of a Param.
     if (!context.inContextOf("Param", this)) {
       context.store(this.name, this);
     }
@@ -31,7 +31,7 @@ export default class En extends Type {
     context.leave(this);
   }
 
-  describe(): string {
+  forPrompt(context: Context): string {
     return `Enum { name='${this.name}', values=${this.items.length} }`;
   }
 
