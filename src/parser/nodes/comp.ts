@@ -7,6 +7,7 @@ import Factory from "./factory";
 import Writer from "../io/writer";
 import Naming from "../utils/naming";
 import Ref from "./ref";
+import PropRef from "./props/prop_ref";
 
 ;
 
@@ -73,7 +74,6 @@ export default class Composed extends Type {
         for (const prop of selected) {
           trace(context, '   [comp::generate]', `-> property: ${prop.name} (parent: ${prop.parent!.name})`);
           prop.generate(context, writer, selection);
-          // context.generatedSet.add(prop.parent!.id)
         }
 
         writer.write('}\n\n');
@@ -112,8 +112,6 @@ export default class Composed extends Type {
 
     trace(context, '-> [composed::all-of]', `in: '${this.name}' of: ${allOfs.length} - refs: ${refs}`);
 
-    // const collected = new Map<string, Prop>();
-
     for (let i = 0; i < allOfs.length; i++) {
       const allOfItemSchema = allOfs[i];
 
@@ -121,31 +119,9 @@ export default class Composed extends Type {
       trace(context, '   [composed::all-of]', 'allOf type: ' + type);
 
       if (type) {
-        /* this is a kind of hack -- because Composed will have all the properties
-        from allOfs we will assume that all children have been generated */
         type.visit(context);
-        if (type instanceof Ref) {
-          const ref = (type as Ref).refType;
-          context.generatedSet.add(ref!.id);
-        }
-        // we are not visiting the child nodes now - we'll leave them as it is
-        // type.visit(context);
-        // for (const [key, prop] of type.props.entries()) {
-        //   collected.set(key, prop);
-        // }
       }
     }
-
-    // const inCompose = context.inContextOf(Composed, this);
-    // const inComposeIdx = Type.findAncestorOf(this, Composed);
-    // const inArrayIdx = Type.findAncestorOf(this, PropArray);
-    // if (!inCompose || inArrayIdx > inComposeIdx) {
-    //   this.promptPropertySelection(context, collected);
-    // } else {
-    // for (const [key, prop] of collected.entries()) {
-    //   this.props.set(key, prop);
-    // }
-    // }
 
     trace(context, '-> [composed]', 'storing: ' + this.name + ' with: ' + this);
     context.store(this.name, this);
@@ -171,22 +147,36 @@ export default class Composed extends Type {
     trace(context, '<- [composed::one-of]', `out: OneOf ${this.name} with size: ${oneOfs.length}`);
   }
 
-  public selectedProps(selection: string[]): Prop[] {
-    // collect properties from children
-    const collected: Prop[] = [];
-    this.collect(this, collected, selection);
-    return collected
-      .filter((prop) => selection.find(s => s.startsWith(prop.path())));
-  }
+  public consolidate(selection: string[]): Set<string> {
+    const ids: Set<string> = new Set()
+    const props: Map<string, Prop> = new Map()
 
-  private collect = (current: Type, collected: Prop[], selection: string[]) => {
-    collected.push(...current.props.values());
+    const queue: IType[] = Array.from(this.children.values())
+      .filter(child => !(child instanceof Prop));
 
-    const children = Array.from(current.children.values())
-      .map((child) => child as Type);
+    while (queue.length > 0) {
+      const node = queue.shift()!
 
-    for (const child of children) {
-      this.collect(child, collected, selection);
+      ids.add((node instanceof Ref)
+          ? (node as any).refType!.id
+          : node.id
+      )
+
+      node.props.forEach((prop) => {
+        if (selection.find(s => s.startsWith(prop.path())))
+          props.set(prop.name, prop);
+      })
+
+      const children = Array.from(node.children.values())
+        .filter(child => !(child instanceof Prop))
+
+      queue.push(...children);
     }
+
+    // copy all collected props from children into this node
+    props.forEach((prop) => this.props.set(prop.name, prop));
+
+    // and return the types we've used
+    return ids
   }
 }

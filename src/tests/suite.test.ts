@@ -187,6 +187,17 @@ test('test_009_Customer360_ScalarsOnly', async () => {
   await run("TMF717_Customer360-v5.0.0.oas.yaml", paths, 3, 4);
 });
 
+test('TMF637-001-UnionTest.yaml', async () => {
+  const paths = [
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>ref:#/c/s/Entity>comp:#/c/s/Entity>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:href',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:name',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#intent>comp:#/c/s/IntentRefOrValue>union:#/c/s/IntentRefOrValue>ref:#/c/s/IntentRef>comp:#/c/s/IntentRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>obj:#/c/s/EntityRef>prop:scalar:id',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#intent>comp:#/c/s/IntentRefOrValue>union:#/c/s/IntentRefOrValue>ref:#/c/s/IntentRef>comp:#/c/s/IntentRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>obj:#/c/s/EntityRef>prop:scalar:name'
+  ]
+
+  await run("TMF637-001-UnionTest.yaml", paths, 1, 8);
+});
+
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number) {
   const gen = await Gen.fromFile(`${base}/${file}`);

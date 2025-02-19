@@ -7,6 +7,8 @@ import Prop from "./props/prop";
 import Factory from "./factory";
 import Param from "./param/param";
 import Writer from "../io/writer";
+import Naming from "../utils/naming";
+import Ref from "./ref";
 
 
 export default class Union extends Type {
@@ -21,8 +23,8 @@ export default class Union extends Type {
     return `union:${this.name}`;
   }
 
-  forPrompt(context: Context): string {
-    throw new Error("Method not implemented.");
+  forPrompt(_context: Context): string {
+    return `${Naming.getRefName(this.name)} (Union)`;
   }
 
   public visit(context: Context): void {
@@ -36,19 +38,15 @@ export default class Union extends Type {
       console.log('In union: ' + this.parent?.name);
     }
 
-    const collected = new Map<string, Prop>();
-
     for (const refSchema of this.schemas) {
       const type = Factory.fromSchema(this, refSchema);
       trace(context, ' [union:visit]', 'of type: ' + type);
+
       type.visit(context);
-      for (const [key, prop] of type.props) {
-        collected.set(key, prop);
-      }
     }
 
     if (!context.inContextOf("Param", this)) {
-      this.visitProperties(context, collected);
+      this.visitProperties(context);
     }
 
     if (this.name != null) {
@@ -60,18 +58,15 @@ export default class Union extends Type {
     context.leave(this);
   }
 
-  private visitProperties(context: Context, collected: Map<string, Prop>): void {
-    const propertiesNames = Array.from(collected.values())
-      .map((p) => p.name)
-      .join(',\n - ');
-
-    for (const [_, prop] of collected.entries()) {
-      trace(context, '   [union]', 'prop: ' + prop);
-      this.props.set(prop.name, prop);
-
-      if (!this.children.includes(prop))
-        this.add(prop);
-    }
+  private visitProperties(context: Context): void {
+    // do nothing?
+    // for (const [_, prop] of collected.entries()) {
+    //   trace(context, '   [union]', 'prop: ' + prop);
+    //   this.props.set(prop.name, prop);
+    //
+    //   if (!this.children.includes(prop))
+    //     this.add(prop);
+    // }
   }
 
   public generate(context: Context, writer: Writer, selection: string[]): void {
@@ -91,11 +86,11 @@ export default class Union extends Type {
       // union MyUnion = Type1 | Type2 | Type3
       writer
         .append('#### NOT SUPPORTED YET BY CONNECTORS!!! union ')
-        .append(this.name)
+        .append(Naming.getRefName(this.name))
         .append(' = ');
 
       const childrenNames = this.children
-        .map((child) => child.name)
+        .map((child) => Naming.getRefName(child.name))
         .join('# | ');
 
       writer.append(childrenNames).append('#\n\n');
@@ -104,7 +99,7 @@ export default class Union extends Type {
 
       writer
         .append('type ')
-        .append(this.name)
+        .append(Naming.getRefName(this.name))
         .append(' { #### replacement for Union ')
         .append(this.name)
         .append('\n');
@@ -126,41 +121,6 @@ export default class Union extends Type {
     context.leave(this);
   }
 
-/*
-  public dependencies(context: Context): Set<IType> {
-    if (!this.visited) {
-      this.visit(context);
-    }
-
-    context.enter(this);
-    trace(
-      context,
-      '-> [union:dependencies]',
-      'in: ' + JSON.stringify(this.schemas.map((s) => s))
-    );
-
-    const set = new Set<IType>();
-    const propsArray = Array.from(this.props.values()).filter(
-      (p) =>
-        p instanceof PropRef || p instanceof PropArray || p instanceof PropObj
-    );
-    for (const p of propsArray) {
-      const deps = p.dependencies(context);
-      for (const d of deps) {
-        set.add(d);
-      }
-    }
-
-    trace(
-      context,
-      '<- [union:dependencies]',
-      'out: ' + JSON.stringify(this.schemas.map((s) => s))
-    );
-    context.leave(this);
-    return set;
-  }
-*/
-
   public select(context: Context, writer: Writer, selection: string[]): void {
     trace(context, '-> [union::select]', `-> in: ${this.name}`);
     const selected = this.selectedProps(selection);
@@ -171,4 +131,38 @@ export default class Union extends Type {
 
     trace(context, '<- [union::select]', `-> out: ${this.name}`);
   }
+
+  public consolidate(selection: string[]): Set<string> {
+    const ids: Set<string> = new Set()
+    const props: Map<string, Prop> = new Map()
+
+    const queue: IType[] = Array.from(this.children.values())
+      .filter(child => !(child instanceof Prop));
+
+    while (queue.length > 0) {
+      const node = queue.shift()!
+
+      ids.add((node instanceof Ref)
+        ? (node as any).refType!.id
+        : node.id
+      )
+
+      node.props.forEach((prop) => {
+        if (selection.find(s => s.startsWith(prop.path())))
+          props.set(prop.name, prop);
+      })
+
+      const children = Array.from(node.children.values())
+        .filter(child => !(child instanceof Prop))
+
+      queue.push(...children);
+    }
+
+    // copy all collected props from children into this node
+    props.forEach((prop) => this.props.set(prop.name, prop));
+
+    // and return the types we've used
+    return ids
+  }
+
 }

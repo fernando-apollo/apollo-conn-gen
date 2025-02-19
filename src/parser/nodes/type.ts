@@ -38,15 +38,16 @@ export abstract class Type implements IType {
   public name: string;
   public children: IType[];
   circularRef?: IType;
-  public props: Map<string, Prop>;
   public visited: boolean;
+
+  private readonly _props: Map<string, Prop>;
 
   protected constructor(parent: IType | undefined, name: string) {
     this.parent = parent;
     this.name = name;
     this.children = [];
-    this.props = new Map<string, Prop>();
     this.visited = false;
+    this._props = new Map<string, Prop>();
   }
 
   abstract visit(context: Context): void;
@@ -105,6 +106,7 @@ export abstract class Type implements IType {
   abstract generate(context: Context, writer: Writer, selection: string[]): void;
 
   get id() { return this.name; }
+  get props() { return this._props; }
 
   ancestors(): IType[] {
     const result: Array<IType> = [];

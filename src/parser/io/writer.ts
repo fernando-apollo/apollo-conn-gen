@@ -237,6 +237,15 @@ export default class Writer {
     }
 
     if (!_.isEmpty(pending)) {
+      // first pass is to consolidate all Composed & Union nodes
+      const composed: (Composed | Union)[] = Array.from(pending.values())
+        .filter(t => t instanceof Composed || t instanceof Union)
+        .map(t => t as Composed);
+
+      for (const comp of composed) {
+        comp.consolidate(selection).forEach(id => pending.delete(id));
+      }
+
       this.writeSchema(this, pending, selection);
     }
   }

@@ -8,6 +8,7 @@ import Naming from "../utils/naming";
 import Writer from "../io/writer";
 import Arr from "./arr";
 import {RenderContext} from "../../prompts/theme";
+import Prop from "./props/prop";
 
 export default class Ref extends Type {
   public refType?: IType;
@@ -22,6 +23,10 @@ export default class Ref extends Type {
 
   get id(): string {
     return 'ref:' + this.schema?.$ref;
+  }
+
+  get props(): Map<string, Prop> {
+    return this.refType?.props ?? new Map();
   }
 
   forPrompt(context: Context): string {
