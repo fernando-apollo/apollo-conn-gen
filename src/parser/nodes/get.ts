@@ -98,11 +98,10 @@ export default class Get extends Type {
 
     if (parameters && parameters.length > 0) {
       this.params = parameters
-        .filter(
-          (p) => p.in || (p.in && (p.in as string).toLowerCase() !== 'header')
-        )
+        .filter((p) => !p.in || (p.in && (p.in as string).toLowerCase() !== 'header'))
         .map((p: ParameterObject) => this.visitParameter(context, this, p));
-    } else {
+    }
+    else {
       this.params = [];
     }
 

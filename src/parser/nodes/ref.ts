@@ -10,7 +10,7 @@ import Arr from "./arr";
 import {RenderContext} from "../../prompts/theme";
 
 export default class Ref extends Type {
-  private refType?: IType;
+  public refType?: IType;
 
   constructor(
     parent: IType | undefined,

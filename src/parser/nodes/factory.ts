@@ -164,13 +164,26 @@ export default class Factory {
     return new Res(parent, 'r', mediaSchema);
   }
 
-  public static fromParam(context: Context, parent: IType, p: ParameterObject): Param {
-    if ('$ref' in p) throw new Error(`Don't know how to handle ref params yet: ${JSON.stringify(p)}`);
+  public static fromParam(context: Context, parent: IType, p: ParameterObject | ReferenceObject): Param {
+    let param: ParameterObject;
 
-    const schema = p.schema as SchemaObject;
-    const required = p.required === true;
+    if ('$ref' in p) {
+      const ref: ReferenceObject = p as ReferenceObject;
+      const schema = context.lookupParam(ref.$ref);
 
-    return new Param(parent, p.name, schema, required, schema.default, p);
+      if (!schema) {
+        throw new Error('Schema not found for ref: ' + ref.$ref);
+      }
+      param = schema as ParameterObject;
+    }
+    else {
+      param = p as ParameterObject;
+    }
+
+    const schema = param.schema as SchemaObject;
+    const required = param.required === true;
+
+    return new Param(parent, param.name, schema, required, schema.default, param);
   }
 
   public static fromCircularRef(parent: IType, child: IType): IType {

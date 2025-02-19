@@ -179,6 +179,14 @@ test('test_008_testHomepageProductSelectorAnonymousObject 02', async () => {
   await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 3);
 });
 
+test('test_009_Customer360_ScalarsOnly', async () => {
+  const paths = [
+    'get:/customer360/{id}>res:r>ref:#/c/s/Customer360>comp:#/c/s/Customer360>ref:#/c/s/Entity>comp:#/c/s/Entity>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:id'
+  ]
+
+  await run("TMF717_Customer360-v5.0.0.oas.yaml", paths, 3, 4);
+});
+
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number) {
   const gen = await Gen.fromFile(`${base}/${file}`);

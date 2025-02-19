@@ -1,14 +1,14 @@
 import {IType, Type} from "./type";
 import Context from "../context";
 import {SchemaObject} from 'oas/dist/types';
-
-;
 import {trace} from "../../log/trace";
 import Prop from "./props/prop";
 import Factory from "./factory";
 import Writer from "../io/writer";
 import Naming from "../utils/naming";
-import {RenderContext} from "../../prompts/theme";
+import Ref from "./ref";
+
+;
 
 export default class Composed extends Type {
   constructor(parent: IType | undefined, public name: string, public schema: SchemaObject) {
@@ -20,7 +20,7 @@ export default class Composed extends Type {
   }
 
   forPrompt(context: Context): string {
-    return "";
+    return `${Naming.getRefName(this.name)} (Comp)`;;
   }
 
   visit(context: Context): void {
@@ -64,6 +64,7 @@ export default class Composed extends Type {
       }
     } else if (composedSchema.allOf != null) {
       const selected = this.selectedProps(selection);
+
       if (selected.length > 0) {
         writer.write('type ');
         writer.write(Naming.getRefName(this.name));
@@ -72,6 +73,7 @@ export default class Composed extends Type {
         for (const prop of selected) {
           trace(context, '   [comp::generate]', `-> property: ${prop.name} (parent: ${prop.parent!.name})`);
           prop.generate(context, writer, selection);
+          // context.generatedSet.add(prop.parent!.id)
         }
 
         writer.write('}\n\n');
@@ -87,10 +89,13 @@ export default class Composed extends Type {
 
     const composedSchema = this.schema;
     if (composedSchema.allOf != null) {
-      for (const prop of this.props.values()) {
+      const selected = this.selectedProps(selection);
+
+      for (const prop of selected) {
         prop.select(context, writer, selection);
       }
-    } else if (composedSchema.oneOf != null) {
+    }
+    else if (composedSchema.oneOf != null) {
       if (this.children.length === 1) {
         this.children[0].select(context, writer, selection);
       } else {
@@ -116,6 +121,13 @@ export default class Composed extends Type {
       trace(context, '   [composed::all-of]', 'allOf type: ' + type);
 
       if (type) {
+        /* this is a kind of hack -- because Composed will have all the properties
+        from allOfs we will assume that all children have been generated */
+        type.visit(context);
+        if (type instanceof Ref) {
+          const ref = (type as Ref).refType;
+          context.generatedSet.add(ref!.id);
+        }
         // we are not visiting the child nodes now - we'll leave them as it is
         // type.visit(context);
         // for (const [key, prop] of type.props.entries()) {
@@ -157,5 +169,24 @@ export default class Composed extends Type {
     }
 
     trace(context, '<- [composed::one-of]', `out: OneOf ${this.name} with size: ${oneOfs.length}`);
+  }
+
+  public selectedProps(selection: string[]): Prop[] {
+    // collect properties from children
+    const collected: Prop[] = [];
+    this.collect(this, collected, selection);
+    return collected
+      .filter((prop) => selection.find(s => s.startsWith(prop.path())));
+  }
+
+  private collect = (current: Type, collected: Prop[], selection: string[]) => {
+    collected.push(...current.props.values());
+
+    const children = Array.from(current.children.values())
+      .map((child) => child as Type);
+
+    for (const child of children) {
+      this.collect(child, collected, selection);
+    }
   }
 }

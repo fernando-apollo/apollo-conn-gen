@@ -38,15 +38,15 @@ export default class Writer {
   public writeSchema(writer: Writer, pending: Map<string, IType>, selection: string[]): void {
     const context = this.generator.context!;
     const generatedSet = context.generatedSet;
-    generatedSet.clear();
+    // generatedSet.clear();
 
     this.writeDirectives(writer);
     this.writeJSONScalar(writer);
 
     pending.forEach((type: IType, _key: string) => {
-      if (!generatedSet.has(type.path())) {
+      if (!generatedSet.has(type.id)) {
         type.generate(context, this, selection);
-        generatedSet.add(type.path());
+        generatedSet.add(type.id);
       }
     });
 
@@ -75,13 +75,15 @@ export default class Writer {
   private writeQuery(context: Context, writer: Writer, collected: Map<string, IType>, selection: string[]): void {
     writer.write('type Query {\n');
 
+    const selectionSet = new Set<string>(selection.map(s => s.split('>')[0]));
+
     let paths = Array.from(collected.values())
-      .filter(path => selection.find(s => s.startsWith(path.path())));
+      .filter(path => selectionSet.has(path.id));
 
     for (const path of paths) {
       path.generate(context, writer, []);
       this.writeConnector(context, writer, path, selection);
-      context.generatedSet.add(path.name);
+      context.generatedSet.add(path.id);
     }
 
     writer.write('}\n\n');

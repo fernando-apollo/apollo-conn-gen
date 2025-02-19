@@ -1,15 +1,14 @@
 import {IType} from './nodes/type';
 import {trace} from '../log/trace';
 import Oas from 'oas';
-import {ResponseObject, SchemaObject} from 'oas/dist/types';
+import {ParameterObject, ResponseObject, SchemaObject} from 'oas/dist/types';
 import {ReferenceObject} from './nodes/props/types';
 import Naming from './utils/naming';
-// import Prompt from "../prompts/prompt";
 
 export default class Context {
   public static readonly COMPONENTS_SCHEMAS: string = '#/components/schemas/';
-  public static readonly COMPONENTS_RESPONSES: string =
-    '#/components/responses/';
+  public static readonly COMPONENTS_RESPONSES: string = '#/components/responses/';
+  public static readonly PARAMETER_SCHEMAS: string = '#/components/parameters/';
 
   private parser: Oas;
   // private prompt: Prompt;
@@ -64,6 +63,19 @@ export default class Context {
       return schemas ? schemas[Naming.getRefName(ref)!] : null;
     }
     return null;
+  }
+
+  public lookupParam(ref: string): ParameterObject | boolean {
+    if (ref && ref.startsWith(Context.PARAMETER_SCHEMAS)) {
+      const definition = this.parser.getDefinition();
+      const parameters = definition.components?.parameters ?? {};
+
+      // get the parameter schema
+      const name = Naming.getRefName(ref)!;
+      return parameters[name] as ParameterObject ?? false;
+    }
+
+    return false;
   }
 
   inContextOf(type: string, node: IType): boolean {

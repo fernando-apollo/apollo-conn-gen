@@ -70,6 +70,9 @@ class RemoveRefConverter extends AbstractConverter {
     if (result.includes('#/components/responses/')) {
       result = result.replace(/#\/components\/responses\//g, '');
     }
+    if (result.includes('#/components/parameters/')) {
+      result = result.replace(/#\/components\/parameters\//g, '');
+    }
     return result;
   }
 }

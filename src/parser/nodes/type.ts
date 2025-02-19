@@ -176,7 +176,7 @@ export abstract class Type implements IType {
     }
   */
 
-  protected selectedProps(selection: string[]) {
+  public selectedProps(selection: string[]) {
     return Array.from(this.props.values())
       .filter((prop) => selection.find(s => s.startsWith(prop.path())));
   }
