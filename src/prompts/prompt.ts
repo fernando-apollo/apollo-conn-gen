@@ -131,20 +131,38 @@ export const typesPrompt =
       const [active, setActive] = useState(bounds.first)
       const activeItem: IType = items[active]
 
+      const isTypeLeaf = (type: IType): boolean => {
+        return activeItem instanceof PropScalar ||
+          (activeItem instanceof PropArray && activeItem.items instanceof PropScalar);
+      }
+
+
       useKeypress((key, rl) => {
         if (isEnterKey(key)) {
           setStatus('done')
           done(selected)
-        } else if (key.name === 'x') {
+        } else if (isSelectKey(key)) {
           if (selected.includes(activeItem.path()))
             setSelected(selected.filter(path => path !== activeItem.path()))
           else
             setSelected([...selected, activeItem.path()]);
+        }
+        else if (isSelectAllKey(key)) {
+          const filtered = activeItem.parent?.children
+            .filter(child => isTypeLeaf(child) && !selected.includes(child.path()))
+            .map(child => child.path()) ?? []
 
-        } else {
-          // let canBeExpanded = !(activeItem instanceof PropScalar);
-          const isLeaf = activeItem instanceof PropScalar ||
-            (activeItem instanceof PropArray && activeItem.items instanceof PropScalar)
+          setSelected([...selected, ...filtered]);
+        }
+        else if (isSelectNoneKey(key)) {
+          const filtered = activeItem.parent?.children
+            .filter(child => isTypeLeaf(child) && selected.includes(child.path()))
+            .map(child => child.path()) ?? []
+
+          setSelected(selected.filter(path => !filtered.includes(path)));
+        }
+        else {
+          const isLeaf = isTypeLeaf(activeItem)
 
           if ((isSpaceKey(key) || isRightKey(key)) && !isLeaf) {
             setCurrent(activeItem)
@@ -197,7 +215,7 @@ export const typesPrompt =
 
       const helpTip = useMemo(() => {
         const helpTipLines = [
-          `${theme.style.key(figures.arrowUp + figures.arrowDown)} navigate, ${theme.style.key('<x>')} select field, ${theme.style.key('<enter>')} finish${allowCancel ? `, ${theme.style.key('<esc>')} cancel` : ''}`,
+          `${theme.style.key(figures.arrowUp + figures.arrowDown)} navigate, ${theme.style.key('<x>')} select field, ${theme.style.key('<a>')} select all fields, ${theme.style.key('<n>')} deselect all fields, ${theme.style.key('<enter>')} finish${allowCancel ? `, ${theme.style.key('<esc>')} cancel` : ''}`,
           `${theme.style.key('<space>')} expand type, ${theme.style.key('<backspace>')} go back`
         ]
 
@@ -212,13 +230,25 @@ export const typesPrompt =
   )
 
 const isLeftKey = (key: KeypressEvent): boolean =>
-  // The up key
+  // The left key
   key.name === 'left' ||
   // Vim keybinding
   key.name === 'j';
 
 const isRightKey = (key: KeypressEvent): boolean =>
-  // The up key
+  // The right key
   key.name === 'right' ||
   // Vim keybinding
   key.name === 'l';
+
+const isSelectKey = (key: KeypressEvent): boolean =>
+  key.name === 'x';
+
+const isSelectAllKey = (key: KeypressEvent): boolean =>
+  key.name === 'a';
+
+const isSelectNoneKey = (key: KeypressEvent): boolean =>
+  key.name === 'n';
+
+const isInvertKey = (key: KeypressEvent): boolean =>
+  key.name === 'a';

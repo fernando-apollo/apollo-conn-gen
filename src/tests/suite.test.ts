@@ -18,7 +18,7 @@ test('test minimal petstore', async () => {
 });
 
 test('test minimal petstore 02', async () => {
-    const paths = [
+  const paths = [
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:id',
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#tags>prop:ref:#TagsItem>obj:#/c/s/Tag>prop:scalar:name',
     'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:ref:#category>obj:#/c/s/Category>prop:scalar:id',
@@ -122,6 +122,7 @@ test('test_004_testAccountSegment', async () => {
 
   await run("js-mva-consumer-info_v1.yaml", paths, 1, 4);
 });
+
 test('test_005_testHomepageProductSelector', async () => {
   const paths = [
     'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:scalar:activationDate',
@@ -146,6 +147,38 @@ test('test_005_testHomepageProductSelector', async () => {
   await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 1);
 });
 
+test('test_006_testHomepageProductSelectorInlineArray', async () => {
+  const paths = [
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:isUnlimited',
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:remainingValue',
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:totalValue',
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:type',
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:unit',
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:usageType',
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:usedValue',
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:ref:#usageSummary>array:usageSummary>obj:usageSummary>prop:scalar:validFor'
+  ]
+
+  await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 3);
+});
+
+test('test_008_testHomepageProductSelectorAnonymousObject', async () => {
+  const paths = [
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:array:#productRelationship>prop:ref:#ProductRelationshipItem>obj:#/c/s/productRelationship>prop:scalar:relationshipType'
+  ]
+
+  await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 2);
+});
+
+test('test_008_testHomepageProductSelectorAnonymousObject 02', async () => {
+  const paths = [
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:array:#productRelationship>prop:ref:#ProductRelationshipItem>obj:#/c/s/productRelationship>prop:obj:product>obj:product>prop:scalar:id',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:array:#productRelationship>prop:ref:#ProductRelationshipItem>obj:#/c/s/productRelationship>prop:obj:product>obj:product>prop:scalar:name',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:#/c/s/productSelectorItems>obj:#/c/s/productSelectorItems>prop:array:#productRelationship>prop:ref:#ProductRelationshipItem>obj:#/c/s/productRelationship>prop:obj:product>obj:product>prop:scalar:type'
+  ]
+  await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 3);
+});
+
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number) {
   const gen = await Gen.fromFile(`${base}/${file}`);
@@ -162,7 +195,7 @@ async function run(file: string, paths: string[], pathsSize: number, typesSize: 
   expect(schema).toBeDefined();
 
   const schemaFile = path.join(os.tmpdir(), file.replace(/yaml|json|yml/, "graphql"));
-  fs.writeFileSync(schemaFile, schema, { encoding: 'utf-8', flag: 'w' });
+  fs.writeFileSync(schemaFile, schema, {encoding: 'utf-8', flag: 'w'});
 
   const [result, output] = compose(schemaFile);
   expect(result).toBeTruthy();
@@ -172,12 +205,12 @@ async function run(file: string, paths: string[], pathsSize: number, typesSize: 
 /// rover checks
 function isRoverAvailable(command: string): [boolean, string?] {
   const cmd = os.platform() === 'win32' ? 'where' : 'which';
-  const result = spawnSync(cmd, [command], { encoding: 'utf8' });
+  const result = spawnSync(cmd, [command], {encoding: 'utf8'});
 
   return [result.status === 0, result.stdout.toString().trim()];
 }
 
-function compose(schemaPath: string){
+function compose(schemaPath: string) {
   let rover: [boolean, (string | undefined)?] = isRoverAvailable('rover');
   if (!rover[0]) {
     throw new Error("Rover is not available");
@@ -192,7 +225,7 @@ subgraphs:
     schema:
       file: ${schemaPath} # path to the schema file`;
 
-  fs.writeFileSync(supergraphFile, content, { encoding: 'utf-8', flag: 'w' });
+  fs.writeFileSync(supergraphFile, content, {encoding: 'utf-8', flag: 'w'});
 
   const cmd = `${rover[1]} supergraph compose --config ${supergraphFile} --elv2-license accept`
 
@@ -200,8 +233,7 @@ subgraphs:
   try {
     output = execSync(cmd, {stdio: 'inherit'});
     return [true, undefined];
-  }
-  catch (error) {
+  } catch (error) {
     return [false, output?.toString()];
   }
 }

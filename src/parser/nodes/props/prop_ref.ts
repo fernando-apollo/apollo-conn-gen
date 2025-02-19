@@ -13,6 +13,7 @@ import Composed from "../comp";
 import {RenderContext} from "../../../prompts/theme";
 import Union from "../union";
 import CircularRef from "../circular_ref";
+import _ from "lodash";
 
 export default class PropRef extends Prop {
   private refType?: IType;
@@ -80,7 +81,7 @@ export default class PropRef extends Prop {
     if (type && (type as IType) instanceof Arr) {
       writer.append('[');
       const items = (type as Arr).itemsType;
-      writer.append(items!.name);
+      writer.append(_.upperFirst(items!.name));
       writer.append(']');
     }
     else {

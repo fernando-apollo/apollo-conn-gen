@@ -14,6 +14,13 @@ import Union from "../union";
 export default class PropObj extends Prop {
   constructor(parent: IType, name: string, public schema: SchemaObject, public obj: IType) {
     super(parent, name, schema);
+    if (!obj) {
+      throw new Error("obj parameter is required");
+    }
+    if (obj.parent !== this) {
+      // TODO: check if reparenting is necessary?!?!
+      obj.parent = this;
+    }
     this.updateName(parent);
   }
 
@@ -22,16 +29,16 @@ export default class PropObj extends Prop {
   }
 
   visit(context: Context): void {
-    if (this.visited) return;
+    if (this.visited)
+      return;
+
     context.enter(this);
     trace(context, '-> [prop-obj:visit]', 'in ' + this.name + ', obj: ' + this.obj.name);
 
     this.obj.visit(context);
-
     if (!this.children.includes(this.obj)) {
       this.add(this.obj);
     }
-
     this.visited = true;
 
     trace(context, '<- [prop-obj:visit]', 'out ' + this.name + ', obj: ' + this.obj.name);
