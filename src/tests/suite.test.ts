@@ -187,7 +187,7 @@ test('test_009_Customer360_ScalarsOnly', async () => {
   await run("TMF717_Customer360-v5.0.0.oas.yaml", paths, 3, 4);
 });
 
-test('TMF637-001-UnionTest.yaml', async () => {
+test('test_010_TMF633_IntentOrValue_to_Union', async () => {
   const paths = [
     'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>ref:#/c/s/Entity>comp:#/c/s/Entity>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:href',
     'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:name',
@@ -198,8 +198,39 @@ test('TMF637-001-UnionTest.yaml', async () => {
   await run("TMF637-001-UnionTest.yaml", paths, 1, 8);
 });
 
+test('test_011_TMF637_001_ComposedTest', async () => {
+  const paths = [
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:name',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>ref:#/c/s/Entity>comp:#/c/s/Entity>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:id',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/Extensible>obj:#/c/s/Extensible>prop:scalar:@baseType',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/Extensible>obj:#/c/s/Extensible>prop:scalar:@schemaLocation',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/Extensible>obj:#/c/s/Extensible>prop:scalar:@type',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>obj:#/c/s/EntityRef>prop:scalar:@referredType',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>obj:#/c/s/EntityRef>prop:scalar:href',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>obj:#/c/s/EntityRef>prop:scalar:id',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>obj:#/c/s/EntityRef>prop:scalar:name',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>obj:#/c/s/BillingAccountRef>prop:scalar:ratingType',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:href',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:id',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>ref:#/c/s/Extensible>obj:#/c/s/Extensible>prop:scalar:@baseType',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>ref:#/c/s/Extensible>obj:#/c/s/Extensible>prop:scalar:@schemaLocation',
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>ref:#/c/s/Extensible>obj:#/c/s/Extensible>prop:scalar:@type'
+  ]
+
+  await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 6);
+});
+
+test('test_013_testTMF637_TestSimpleRecursion', async () => {
+  const paths = [
+    'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:sku',
+    'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#relatedProduct>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:sku'
+  ]
+
+  await run("TMF637-002-SimpleRecursionTest.yaml", paths, 1, 2, true);
+});
+
 // run test
-async function run(file: string, paths: string[], pathsSize: number, typesSize: number) {
+async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false) {
   const gen = await Gen.fromFile(`${base}/${file}`);
   await gen.visit();
 
@@ -217,8 +248,15 @@ async function run(file: string, paths: string[], pathsSize: number, typesSize: 
   fs.writeFileSync(schemaFile, schema, {encoding: 'utf-8', flag: 'w'});
 
   const [result, output] = compose(schemaFile);
-  expect(result).toBeTruthy();
-  expect(output).toBeUndefined();
+  if (!shouldFail) {
+    expect(result).toBeTruthy();
+    expect(output).toBeUndefined();
+  }
+  else {
+    expect(result).toBeFalsy();
+    expect(output).toBeDefined();
+    expect(output).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`: type `Product`")
+  }
 }
 
 /// rover checks
@@ -250,9 +288,9 @@ subgraphs:
 
   let output;
   try {
-    output = execSync(cmd, {stdio: 'inherit'});
+    output = execSync(cmd, {stdio: 'pipe'});
     return [true, undefined];
-  } catch (error) {
-    return [false, output?.toString()];
+  } catch (error: any) {
+    return [false, error?.message];
   }
 }
