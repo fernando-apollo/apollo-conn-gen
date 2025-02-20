@@ -26,6 +26,8 @@ import PropScalar from "../parser/nodes/props/prop_scalar";
 import {getMaxLength, isEscapeKey} from "./base/utils";
 import PropArray from "../parser/nodes/props/prop_array";
 import Context from "../parser/context";
+import Composed from "../parser/nodes/comp";
+import CircularRef from "../parser/nodes/circular_ref";
 
 const baseTheme: CustomTheme = {
   prefix: {
@@ -60,8 +62,9 @@ const baseTheme: CustomTheme = {
         ? this.hierarchySymbols.leaf
         : this.hierarchySymbols.branch
 
-    const isLeaf = item instanceof PropScalar ||
-      (item instanceof PropArray && item.items instanceof PropScalar)
+    const isLeaf = item instanceof PropScalar
+      || item instanceof CircularRef
+      || (item instanceof PropArray && item.items instanceof PropScalar)
 
     let line = !isLeaf
       ? `${item.forPrompt(context.context)} ${figures.triangleRight}`
@@ -132,23 +135,28 @@ export const typesPrompt =
       const activeItem: IType = items[active]
 
       const isTypeLeaf = (type: IType): boolean => {
-        return activeItem instanceof PropScalar ||
-          (activeItem instanceof PropArray && activeItem.items instanceof PropScalar);
+        return type instanceof PropScalar
+          || type instanceof CircularRef
+          || (type instanceof PropArray && type.items instanceof PropScalar);
       }
-
 
       useKeypress((key, rl) => {
         if (isEnterKey(key)) {
           setStatus('done')
           done(selected)
-        } else if (isSelectKey(key)) {
+        }
+        else if (isSelectKey(key)) {
           if (selected.includes(activeItem.path()))
             setSelected(selected.filter(path => path !== activeItem.path()))
           else
             setSelected([...selected, activeItem.path()]);
         }
         else if (isSelectAllKey(key)) {
-          const filtered = activeItem.parent?.children
+          const children = (current instanceof Composed
+            ? current.props.values()
+            : current!.children.values())
+
+          const filtered = Array.from(children)
             .filter(child => isTypeLeaf(child) && !selected.includes(child.path()))
             .map(child => child.path()) ?? []
 
@@ -181,10 +189,12 @@ export const typesPrompt =
               next = (next + offset + items.length) % items.length
               setActive(next)
             }
-          } else if (isBackspaceKey(key) || isLeftKey(key)) {
+          }
+          else if (isBackspaceKey(key) || isLeftKey(key)) {
             setCurrent(current?.parent)
             setActive(bounds.first)
-          } else if (isEscapeKey(key) && allowCancel) {
+          }
+          else if (isEscapeKey(key) && allowCancel) {
             setStatus('canceled')
             done([])
           }

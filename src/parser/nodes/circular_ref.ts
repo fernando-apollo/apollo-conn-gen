@@ -6,14 +6,20 @@ import Context from "../context";
 import {trace} from "../../log/trace";
 import Writer from "../io/writer";
 import {RenderContext} from "../../prompts/theme";
+import Naming from "../utils/naming";
 
 export default class CircularRef extends Type {
   constructor(parent: IType, public child: IType) {
     super(parent, child.name);
+    // this.children = parent.children;
   }
 
-  forPrompt(context: Context): string {
-    return 'CircularRef {child: ' + this.name + '}';
+  get id(): string {
+    return `circular-ref:#${this.name}`;
+  }
+
+  forPrompt(_context: Context): string {
+    return `${Naming.getRefName(this.child.name)} (Circular Ref)`;
   }
 
   public add(child: IType): void {

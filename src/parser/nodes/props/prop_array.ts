@@ -45,12 +45,12 @@ export default class PropArray extends Prop {
 
   public add(child: IType): void {
     const paths: IType[] = this.ancestors();
-    const contains: boolean = paths.includes(child);
+    const contains: boolean = paths.map(p => p.id).includes(child.id);
 
     trace(null, '-> [prop-array:add]', 'contains child? ' + contains);
 
     if (contains) {
-      const ancestor: IType = paths[paths.indexOf(child)];
+      const ancestor: IType = paths[paths.map(p => p.id).indexOf(child.id)];
       const wrapper: IType = Factory.fromCircularRef(this, ancestor);
       super.add(wrapper);
       this.visited = true;

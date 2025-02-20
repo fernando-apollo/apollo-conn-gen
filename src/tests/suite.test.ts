@@ -226,11 +226,31 @@ test('test_013_testTMF637_TestSimpleRecursion', async () => {
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#relatedProduct>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:sku'
   ]
 
-  await run("TMF637-002-SimpleRecursionTest.yaml", paths, 1, 2, true);
+  const output = await run("TMF637-002-SimpleRecursionTest.yaml", paths, 1, 2, true);
+  expect(output).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`: type `Product`")
+});
+
+test('test_014_testTMF637_TestRecursion', async () => {
+  const paths = [
+    'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:#/c/s/RelatedPartyOrPartyRole>prop:scalar:role',
+    'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:#/c/s/RelatedPartyOrPartyRole>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>obj:#/c/s/PartyRole>prop:scalar:name'
+  ]
+  const output = await run("TMF637-002-RecursionTest.yaml", paths, 1, 7, true);
+  expect(output).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`: type `Product`")
+});
+
+test('test_014_testTMF637_TestRecursion 02', async () => {
+  /* An interesting test: the cli won't produce an invalid schema if the CircularRef node is added. The
+  * selection process stops there, and won't let the user choose any descendants, thus avoiding the recursion
+  * altogether. */
+  const paths = [
+    'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:#/c/s/RelatedPartyOrPartyRole>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>obj:#/c/s/PartyRole>prop:scalar:name'
+  ]
+  const output = await run("TMF637-002-RecursionTest.yaml", paths, 1, 7);
 });
 
 // run test
-async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false) {
+async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false): Promise<string | undefined> {
   const gen = await Gen.fromFile(`${base}/${file}`);
   await gen.visit();
 
@@ -255,7 +275,7 @@ async function run(file: string, paths: string[], pathsSize: number, typesSize: 
   else {
     expect(result).toBeFalsy();
     expect(output).toBeDefined();
-    expect(output).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`: type `Product`")
+    return output;
   }
 }
 

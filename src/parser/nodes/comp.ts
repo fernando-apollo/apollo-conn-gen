@@ -20,7 +20,7 @@ export default class Composed extends Type {
     return `comp:${this.name}`;
   }
 
-  forPrompt(context: Context): string {
+  forPrompt(_context: Context): string {
     return `${Naming.getRefName(this.name)} (Comp)`;;
   }
 
@@ -162,10 +162,15 @@ export default class Composed extends Type {
           : node.id
       )
 
-      node.props.forEach((prop) => {
-        if (selection.find(s => s.startsWith(prop.path())))
-          props.set(prop.name, prop);
-      })
+      if (selection.length > 0) {
+        node.props.forEach((prop) => {
+          if (selection.find(s => s.startsWith(prop.path())))
+            props.set(prop.name, prop);
+        })
+      }
+      else {
+        node.props.forEach((prop) => props.set(prop.name, prop));
+      }
 
       const children = Array.from(node.children.values())
         .filter(child => !(child instanceof Prop))

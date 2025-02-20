@@ -16,7 +16,7 @@ import CircularRef from "../circular_ref";
 import _ from "lodash";
 
 export default class PropRef extends Prop {
-  private refType?: IType;
+  refType?: IType;
 
   constructor(parent: IType | undefined, name: string, public schema: SchemaObject, public ref: string) {
     super(parent, name, schema);
@@ -26,26 +26,25 @@ export default class PropRef extends Prop {
     return `prop:ref:#${this.name}`;
   }
 
-  visit(context: Context): void {
-    /*if (this.visited) return;
-    context.enter(this);
-    trace(context, '-> [prop-ref:visit]', 'in ' + this.name + ', ref: ' + this.ref);
+  public override add(child: IType): void {
+    child.name = this.ref;
+    const paths: IType[] = this.ancestors();
+    const contains: boolean = paths.map(p => p.id).includes(child.id);
 
-    const schema = context.lookupRef(this.ref);
-    if (!schema) {
-      throw new Error('Schema not found for ref: ' + this.ref);
-    }
-
-    const type = Factory.fromSchema(this, this.schema);
-    if (!this.refType) {
-      this.refType = type;
-      type.name = this.ref;
-      // type.visit(context);
+    trace(null, '-> [prop-ref:add]', 'contains child? ' + contains);
+    if (contains) {
+      const ancestor: IType = paths[paths.map(p => p.id).indexOf(child.id)];
+      const wrapper = Factory.fromCircularRef(this, ancestor);
+      super.add(wrapper);
       this.visited = true;
+      this.refType = wrapper;
     }
+    else {
+      super.add(child);
+    }
+  }
 
-    trace(context, '<- [prop-ref:visit]', 'out ' + this.name + ', ref: ' + this.ref);
-    context.leave(this);*/
+  visit(context: Context): void {
     if (this.visited) return;
     context.enter(this);
     trace(context, '-> [prop-ref:visit]', 'in ' + this.name + ', ref: ' + this.ref);
@@ -67,11 +66,7 @@ export default class PropRef extends Prop {
 
       this.visited = true;
     }
-    trace(
-      context,
-      '<- [prop-ref:visit]',
-      'out ' + this.name + ', ref: ' + this.ref
-    );
+    trace(context, '<- [prop-ref:visit]', 'out ' + this.name + ', ref: ' + this.ref);
     context.leave(this);
   }
 

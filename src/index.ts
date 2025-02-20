@@ -1,8 +1,12 @@
 import Gen from "./parser/gen";
-import { Command } from 'commander';
+import {Command} from 'commander';
 
 import {typesPrompt} from "./prompts/prompt";
 import Writer from "./parser/io/writer";
+import Ref from "./parser/nodes/ref";
+import {IType, Type} from "./parser/nodes/type";
+import Composed from "./parser/nodes/comp";
+import PropRef from "./parser/nodes/props/prop_ref";
 
 const originalConsole = {
   log: console.log,
@@ -10,20 +14,49 @@ const originalConsole = {
 
 
 async function main(sourceFile: string): Promise<void> {
-  console.log = () => {};
+  console.log = () => {
+  };
 
   const gen = await Gen.fromFile(sourceFile);
   await gen.visit();
 
   let types = Array.from(gen.paths!.values());
+
+  const expandType = (type?: IType) => {
+    if (!type) return types;
+
+    let result: IType[] = [];
+
+    if (type instanceof Composed) {
+      // make sure we gather all the props
+      (type as Composed).consolidate([])
+
+      result = Array.from(type.props.values());
+    }
+    else {
+      // top level paths
+      result = gen.expand(type);
+
+      if (result.length === 1) { // we are checking for a ref so we can go straight to where its pointing
+        const child = result[0];
+
+        if (!(child as Type).visited)
+          child.visit(gen.context!);
+
+        if (child instanceof Ref) {
+          result = [child.refType!];
+        }
+      }
+    }
+
+    return result
+  }
+
   const paths = await typesPrompt({
     message: "Navigate spec and choose types",
     types,
     context: gen.context!,
-    expandFn: type => {
-      if (!type) return types; // top level paths
-      return gen.expand(type)
-    }
+    expandFn: expandType
   });
 
   console.info('selected :=', paths);
