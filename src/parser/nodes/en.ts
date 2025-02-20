@@ -5,6 +5,7 @@ import {trace} from "../../log/trace";
 import Writer from "../io/writer";
 import GqlUtils from "../utils/gql";
 import {RenderContext} from "../../prompts/theme";
+import Naming from "../utils/naming";
 
 export default class En extends Type {
   constructor(parent: IType, public schema: SchemaObject, public items: string[] = []) {
@@ -31,8 +32,8 @@ export default class En extends Type {
     context.leave(this);
   }
 
-  forPrompt(context: Context): string {
-    return `Enum { name='${this.name}', values=${this.items.length} }`;
+  forPrompt(_context: Context): string {
+    return `${Naming.getRefName(this.name)} (Enum): ${this.items.join(', ')}`;
   }
 
   generate(context: Context, writer: Writer, selection: string[]): void {
@@ -41,9 +42,7 @@ export default class En extends Type {
 
     if (!context.inContextOf("Param", this)) {
       const builder =
-        'enum ' +
-        this.name +
-        ' {\n' +
+        'enum ' + Naming.getRefName(this.name) + ' {\n' +
         this.items.map((s) => ' ' + s).join(',\n') +
         '\n}\n\n';
       writer.write(builder);

@@ -28,6 +28,7 @@ import PropArray from "../parser/nodes/props/prop_array";
 import Context from "../parser/context";
 import Composed from "../parser/nodes/comp";
 import CircularRef from "../parser/nodes/circular_ref";
+import En from "../parser/nodes/en";
 
 const baseTheme: CustomTheme = {
   prefix: {
@@ -62,10 +63,7 @@ const baseTheme: CustomTheme = {
         ? this.hierarchySymbols.leaf
         : this.hierarchySymbols.branch
 
-    const isLeaf = item instanceof PropScalar
-      || item instanceof CircularRef
-      || (item instanceof PropArray && item.items instanceof PropScalar)
-
+    const isLeaf = isTypeLeaf(item)
     let line = !isLeaf
       ? `${item.forPrompt(context.context)} ${figures.triangleRight}`
       : `${item.forPrompt(context.context)}`
@@ -101,6 +99,13 @@ const ANSI_HIDE_CURSOR = '\x1B[?25l'
 
 type PromptTheme = {};
 
+const isTypeLeaf = (type: IType): boolean => {
+  return type instanceof PropScalar
+    || type instanceof En
+    || type instanceof CircularRef
+    || (type instanceof PropArray && type.items instanceof PropScalar);
+}
+
 export const typesPrompt =
   createPrompt<string[] | [], PromptConfig>(
     (config, done) => {
@@ -134,11 +139,6 @@ export const typesPrompt =
       const [active, setActive] = useState(bounds.first)
       const activeItem: IType = items[active]
 
-      const isTypeLeaf = (type: IType): boolean => {
-        return type instanceof PropScalar
-          || type instanceof CircularRef
-          || (type instanceof PropArray && type.items instanceof PropScalar);
-      }
 
       useKeypress((key, rl) => {
         if (isEnterKey(key)) {

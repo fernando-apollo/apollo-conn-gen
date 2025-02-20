@@ -4,6 +4,7 @@ import Writer from "../parser/io/writer";
 import * as path from "path";
 import * as os from "os";
 import {execSync, spawnSync} from 'child_process';
+import * as assert from "node:assert";
 
 const base = "/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/apollo-connector-gen/src/test/resources/"
 
@@ -220,14 +221,22 @@ test('test_011_TMF637_001_ComposedTest', async () => {
   await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 6);
 });
 
-test('test_013_testTMF637_TestSimpleRecursion', async () => {
+/** checks that because we have a circular reference we can't find a type. this would never happen if the paths
+ * were generated using the command line. */
+test('test_013_testTMF637_TestSimpleRecursion no type found', async () => {
   const paths = [
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:sku',
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#relatedProduct>comp:#/c/s/Product>obj:#/c/s/Product>prop:scalar:sku'
   ]
 
-  const output = await run("TMF637-002-SimpleRecursionTest.yaml", paths, 1, 2, true);
-  expect(output).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`: type `Product`")
+  // two checks in the run function + 1 here
+  expect.assertions(4);
+  try {
+    await run("TMF637-002-SimpleRecursionTest.yaml", paths, 1, 2, true);
+  } catch (error) {
+    expect(error).toBeDefined()
+    expect((error as any).message).toContain("Could not find type")
+  }
 });
 
 test('test_014_testTMF637_TestRecursion', async () => {
@@ -235,8 +244,9 @@ test('test_014_testTMF637_TestRecursion', async () => {
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:#/c/s/RelatedPartyOrPartyRole>prop:scalar:role',
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:#/c/s/RelatedPartyOrPartyRole>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>obj:#/c/s/PartyRole>prop:scalar:name'
   ]
-  const output = await run("TMF637-002-RecursionTest.yaml", paths, 1, 7, true);
-  expect(output).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`: type `Product`")
+
+  expect.assertions(6)
+  await run("TMF637-002-RecursionTest.yaml", paths, 1, 7);
 });
 
 test('test_014_testTMF637_TestRecursion 02', async () => {
@@ -249,6 +259,13 @@ test('test_014_testTMF637_TestRecursion 02', async () => {
   const output = await run("TMF637-002-RecursionTest.yaml", paths, 1, 7);
 });
 
+test('test_015_testTMF637_ProductStatusEnum', async () => {
+  const paths = [
+    'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:#/c/s/Product>prop:ref:#status>enum:#/c/s/ProductStatusType'
+  ]
+  const output = await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 5);
+});
+
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false): Promise<string | undefined> {
   const gen = await Gen.fromFile(`${base}/${file}`);
@@ -258,7 +275,13 @@ async function run(file: string, paths: string[], pathsSize: number, typesSize: 
   expect(gen.paths.size).toBe(pathsSize);
 
   const writer: Writer = new Writer(gen);
-  writer.generate(paths);
+
+  try {
+    writer.generate(paths);
+  } catch (err) {
+    throw err;
+  }
+
   expect(gen.context?.types.size).toBe(typesSize);
 
   const schema = writer.flush();
@@ -271,8 +294,7 @@ async function run(file: string, paths: string[], pathsSize: number, typesSize: 
   if (!shouldFail) {
     expect(result).toBeTruthy();
     expect(output).toBeUndefined();
-  }
-  else {
+  } else {
     expect(result).toBeFalsy();
     expect(output).toBeDefined();
     return output;
