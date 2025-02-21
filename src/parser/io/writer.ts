@@ -1,6 +1,6 @@
 import Gen from "../gen";
 import Context from "../context";
-import {IType} from "../nodes/type";
+import {IType, Type} from "../nodes/type";
 import Naming from "../utils/naming";
 import Oas from "oas";
 import _ from "lodash";
@@ -11,6 +11,7 @@ import Obj from "../nodes/obj";
 import Union from "../nodes/union";
 import Composed from "../nodes/comp";
 import CircularRef from "../nodes/circular_ref";
+import {T} from "../utils/type_utils";
 
 export default class Writer {
   buffer: string[];
@@ -57,7 +58,7 @@ export default class Writer {
     // const refs = counter.getCount();
     // this.printRefs(refs);
 
-    // for (const type of this.context.types.values()) {
+    // for (const type of this.context.types.ts.values()) {
     //   if (counter.getCount().has(type.name)) {
     //     await type.generate(this.context, writer);
     //     generatedSet.add(type.name);
@@ -207,24 +208,46 @@ export default class Writer {
       let i = 0;
       do {
         const part = parts[i].replace(/#\/c\/s/g, '#/components/schemas');
+        if (part === '*') {
+          // remove the current path from the selection array
+          selection = selection.filter(s => s !== path);
 
-        current = collection.find(t => t.id === part);
-        if (!current) {
-          // return false;
-          throw new Error("Could not find type: " + part + " from " + path +", last: " + last?.pathToRoot());
+          // add all the props from the current node and exit loop
+          current?.props.forEach(child => {
+            if (T.isLeaf(child)) selection.push(child.path());
+          });
+          break;
+        }
+        else if (part === '**' && current) {
+          // remove the current path from the selection array
+          selection = selection.filter(s => s !== path);
+
+          // add all the props from the current node and exit loop
+          this.traverseTree(current, selection, pending);
+
+          // and break the loop
+          current = undefined;
+          break;
+        }
+        else {
+          current = collection.find(t => t.id === part);
+          if (!current) {
+            throw new Error("Could not find type: " + part + " from " + path + ", last: " + last?.pathToRoot());
+          }
+
+          // make sure we expand it before we move on to the next part
+          this.generator.expand(current);
+          last = current;
+
+          collection = Array.from(current!.children.values())
+            || Array.from(current!.props.values())
+            || [];
+          console.log("found", current);
         }
 
-        // make sure we expand it before we move on to the next part
-        this.generator.expand(current);
-        last = current;
-
-        collection = Array.from(current!.children.values())
-          || Array.from(current!.props.values())
-          || [];
-        console.log("found", current);
-
         i++;
-      } while (i < parts.length);
+      }
+      while (i < parts.length);
 
       if (current) {
         let parentType = Writer.findNonPropParent(current as IType);
@@ -254,6 +277,24 @@ export default class Writer {
 
       this.writeSchema(this, pending, selection);
     }
+  }
+
+  private traverseTree(current: IType, selection: string[], pending: Map<string, IType>) {
+    T.traverse((current as Type), (child) => {
+      if (T.isLeaf(child)) {
+        // this is a weird take but if the child is an array of scalars
+        // then we want to avoid adding it twice
+        if (T.isLeaf(child.parent!)) return;
+        selection.push(child.path());
+
+        let parentType = Writer.findNonPropParent(child);
+        if (!pending.has(parentType.id)) {
+          pending.set(parentType.id, parentType);
+        }
+      } else {
+        this.generator.expand(child);
+      }
+    });
   }
 
   static findNonPropParent(type: IType) {

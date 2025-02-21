@@ -54,7 +54,7 @@ async function main(sourceFile: string): Promise<void> {
   }
 
   const paths = await typesPrompt({
-    message: "Navigate spec and choose types",
+    message: "Navigate spec and choose types.ts",
     types,
     context: gen.context!,
     expandFn: expandType

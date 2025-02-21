@@ -2,7 +2,6 @@ import Context from "../context";
 import Prop from "./props/prop";
 import Writer from "../io/writer";
 import {trace} from "../../log/trace";
-import {RenderContext} from "../../prompts/theme";
 
 export interface IType {
   name: string;
@@ -146,29 +145,17 @@ export abstract class Type implements IType {
       }
     };
 
-    traverse = (callback: (node: IType) => void, context: Context): void => {
-      const traverseNode = (node: IType): void => {
-        context.enter(node);
-        callback(node);
-        for (const child of node.children) {
-          traverseNode(child);
-        }
-        context.leave(node);
-      };
+*/
 
-      traverseNode(this);
-    };
+  /*traverseB(callback: (node: IType) => void): void {
+    const queue: IType[] = [this];
 
-    traverseBreadthFirst(callback: (node: IType) => void): void {
-      const queue: IType[] = [this];
-
-      while (queue.length > 0) {
-        const node = queue.shift()!;
-        callback(node);
-        queue.push(...node.children);
-      }
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+      callback(node);
+      queue.push(...node.children);
     }
-  */
+  }*/
 
   public selectedProps(selection: string[]) {
     return Array.from(this.props.values())

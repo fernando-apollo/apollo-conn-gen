@@ -326,6 +326,14 @@ test('test_017_testMostPopularProduct_star', async () => {
     'get:/emailed/{period}.json>res:r>obj:emailedByPeriodJsonResponse>*'
   ]
 
+  await run("most-popular-product.yaml", paths, 4, 1);
+});
+
+test('test_017_testMostPopularProduct_double-star', async () => {
+  const paths = [
+    'get:/emailed/{period}.json>**'
+  ]
+
   await run("most-popular-product.yaml", paths, 4, 4);
 });
 
@@ -354,13 +362,13 @@ async function run(file: string, paths: string[], pathsSize: number, typesSize: 
   fs.writeFileSync(schemaFile, schema, {encoding: 'utf-8', flag: 'w'});
 
   const [result, output] = compose(schemaFile);
-  if (!shouldFail) {
-    expect(result).toBeTruthy();
-    expect(output).toBeUndefined();
-  } else {
+  if (shouldFail) {
     expect(result).toBeFalsy();
     expect(output).toBeDefined();
     return output;
+  } else {
+    expect(output).toBeUndefined();
+    expect(result).toBeTruthy();
   }
 }
 

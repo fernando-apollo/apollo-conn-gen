@@ -184,7 +184,7 @@ export default class Composed extends Type {
     // copy all collected props from children into this node
     props.forEach((prop) => this.props.set(prop.name, prop));
 
-    // and return the types we've used
+    // and return the types.ts we've used
     return ids
   }
 }
