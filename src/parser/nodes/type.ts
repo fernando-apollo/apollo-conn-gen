@@ -57,33 +57,25 @@ export abstract class Type implements IType {
   abstract select(context: Context, writer: Writer, selection: string[]): void;
 
   find(path: string, collection: Array<IType>): IType | boolean {
-    let found: IType | boolean = false;
-    for (const type of collection) {
-      if (type.path() === path) {
-        found = type;
-        break;
-      }
-    }
-    if (!found) {
-      for (const type of collection) {
-        for (const prop of Array.from(type.props.values())) {
-          if (prop.path() === path) {
-            found = prop;
-            break;
-          }
-        }
-        if (found)
-          break;
-      }
-    }
-    if (!found) {
-      for (const type of collection) {
-        found = this.find(path, type.children);
-        if (found)
-          break;
-      }
-    }
-    return found || false;
+    const parts = path.split(">");
+    let current: IType | undefined;
+
+    let i = 0;
+    do {
+      const part = parts[i];
+
+      current = collection.find(t => t.id === part);
+      if (!current) return false;
+
+      collection = Array.from(current!.children.values())
+        || Array.from(current!.props.values())
+        || [];
+      console.log("found", current);
+
+      i++;
+    } while (i < parts.length);
+
+    return current || false;
   }
 
   expand(context: Context): IType[] {

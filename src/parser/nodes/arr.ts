@@ -7,6 +7,7 @@ import Factory from "./factory";
 import {trace} from "../../log/trace";
 import Writer from '../io/writer';
 import {RenderContext} from "../../prompts/theme";
+import Naming from "../utils/naming";
 
 export default class Arr extends Type {
   public itemsType?: IType;
@@ -34,7 +35,7 @@ export default class Arr extends Type {
   }
 
   forPrompt(context: Context): string {
-    return `Array {name: ${this.name}}`;
+    return `${Naming.getRefName(this.name)} (Array)`;
   }
 
   generate(context: Context, writer: Writer, selection: string[]): void {

@@ -134,7 +134,7 @@ export default class Union extends Type {
 
   public consolidate(selection: string[]): Set<string> {
     const ids: Set<string> = new Set()
-    const props: Map<string, Prop> = new Map()
+    let props: Map<string, Prop> = new Map()
 
     const queue: IType[] = Array.from(this.children.values())
       .filter(child => !(child instanceof Prop));
@@ -147,10 +147,18 @@ export default class Union extends Type {
         : node.id
       )
 
-      node.props.forEach((prop) => {
-        if (selection.find(s => s.startsWith(prop.path())))
-          props.set(prop.name, prop);
-      })
+      if (selection.length > 0) {
+        node.props.forEach((prop) => {
+          if (selection.find(s => s.startsWith(prop.path())))
+            props.set(prop.name, prop);
+        })
+      }
+      else {
+        node.props.forEach((prop) => props.set(prop.name, prop));
+      }
+
+      // sort props
+      props = new Map([...props.entries()].sort());
 
       const children = Array.from(node.children.values())
         .filter(child => !(child instanceof Prop))

@@ -63,7 +63,7 @@ export default class Ref extends Type {
     // If we're in a Response context and the resolved type is an Arr,
     // generate it with array notation.
     if (context.inContextOf("Response", this) && this.refType instanceof Arr) {
-      writer.append('[').append(this.children[0].name).append(']');
+      writer.append('[').append(this.firstChild().name).append(']');
     }
     else {
       // Rewrite terrible names to something more sensible.
@@ -82,5 +82,9 @@ export default class Ref extends Type {
       this.refType.select(context, writer, selection);
     }
     trace(context, '<- [ref::select]', `-> out: ${this.name}`);
+  }
+
+  private firstChild() {
+    return this.refType!.children[0];
   }
 }

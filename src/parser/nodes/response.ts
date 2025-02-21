@@ -6,7 +6,7 @@ import {trace} from "../../log/trace";
 import Writer from "../io/writer";
 import {RenderContext} from "../../prompts/theme";
 
-export default class Res extends Type {
+export default class Response extends Type {
   public schema: SchemaObject;
   public response?: IType;
 

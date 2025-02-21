@@ -10,6 +10,7 @@ import Composed from "../comp";
 import PropRef from "./prop_ref";
 import {RenderContext} from "../../../prompts/theme";
 import Union from "../union";
+import _ from "lodash";
 
 export default class PropObj extends Prop {
   constructor(parent: IType, name: string, public schema: SchemaObject, public obj: IType) {
@@ -17,11 +18,17 @@ export default class PropObj extends Prop {
     if (!obj) {
       throw new Error("obj parameter is required");
     }
+
+    // TODO: check if reparenting is necessary?!?!
     if (obj.parent !== this) {
-      // TODO: check if reparenting is necessary?!?!
       obj.parent = this;
     }
-    this.updateName(parent);
+
+    // this.updateName(parent);
+  }
+
+  forPrompt(_context: Context): string {
+    return _.lowerFirst(this.name) + ': ' + Naming.getRefName(this.obj.name) + " (Obj)";
   }
 
   get id(): string {
@@ -43,10 +50,6 @@ export default class PropObj extends Prop {
 
     trace(context, '<- [prop-obj:visit]', 'out ' + this.name + ', obj: ' + this.obj.name);
     context.leave(this);
-  }
-
-  forPrompt(context: Context): string {
-    return this.name + ': ' + Naming.getRefName(this.obj.name) + " (Obj)";
   }
 
   getValue(context: Context): string {
@@ -91,6 +94,7 @@ export default class PropObj extends Prop {
     );
   }
 
+/*
   private updateName(parent: IType): void {
     if (this.name === 'items') {
       const parentName = parent.name;
@@ -108,4 +112,5 @@ export default class PropObj extends Prop {
       }
     }
   }
+*/
 }

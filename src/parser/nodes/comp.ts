@@ -149,7 +149,7 @@ export default class Composed extends Type {
 
   public consolidate(selection: string[]): Set<string> {
     const ids: Set<string> = new Set()
-    const props: Map<string, Prop> = new Map()
+    let props: Map<string, Prop> = new Map()
 
     const queue: IType[] = Array.from(this.children.values())
       .filter(child => !(child instanceof Prop));
@@ -171,6 +171,9 @@ export default class Composed extends Type {
       else {
         node.props.forEach((prop) => props.set(prop.name, prop));
       }
+
+      // sort props
+      props = new Map([...props.entries()].sort());
 
       const children = Array.from(node.children.values())
         .filter(child => !(child instanceof Prop))

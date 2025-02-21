@@ -7,6 +7,7 @@ import Ref from "./parser/nodes/ref";
 import {IType, Type} from "./parser/nodes/type";
 import Composed from "./parser/nodes/comp";
 import PropRef from "./parser/nodes/props/prop_ref";
+import Union from "./parser/nodes/union";
 
 const originalConsole = {
   log: console.log,
@@ -27,9 +28,9 @@ async function main(sourceFile: string): Promise<void> {
 
     let result: IType[] = [];
 
-    if (type instanceof Composed) {
+    if (type instanceof Composed || type instanceof Union) {
       // make sure we gather all the props
-      (type as Composed).consolidate([])
+      (type as any).consolidate([])
 
       result = Array.from(type.props.values());
     }

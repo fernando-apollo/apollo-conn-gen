@@ -130,9 +130,8 @@ export default class Writer {
           .map((p: Param) => `${p.name}={$args.${Naming.genParamName(p.name)}}`)
           .join('&');
       }
-      const headers = get.params
-        .filter((p: Param) => p.parameter.in && p.parameter.in.toLowerCase() === 'header')
-        .map(p => p.parameter);
+      const headers = get.operation.getParameters()
+        .filter(p => p.in && p.in.toLowerCase() === 'header')
 
       builder += '"\n';
 
@@ -198,30 +197,37 @@ export default class Writer {
   }
 
   generate(selection: string[]) {
-    const operations = Array.from(this.generator.paths.values());
     const pending: Map<string, IType> = new Map();
 
     for (const path of selection) {
-      const parts = Writer.progressiveSplits(path);
+      let collection = Array.from(this.generator.paths.values());
+      const parts = path.split(">");
+      let current, last: IType | undefined;
 
-      let found, parent: IType | boolean = false;
-      for (let i = 0; i < parts.length; i++) {
-        console.log("finding ....", parts[i]);
-        if (i === 0)
-          found = this.generator.find(parts[i]);
-        else
-          found = (found as IType).find(parts[i], operations);
+      let i = 0;
+      do {
+        const part = parts[i].replace(/#\/c\/s/g, '#/components/schemas');
 
-        if (!found) {
-          throw new Error('Could not find type for path: ' + path + ", in: " + (parent as IType).id);
+        current = collection.find(t => t.id === part);
+        if (!current) {
+          // return false;
+          throw new Error("Could not find type: " + part + " from " + path +", last: " + last?.pathToRoot());
         }
 
-        this.generator.expand(found as IType);
-        parent = found;
-      }
+        // make sure we expand it before we move on to the next part
+        this.generator.expand(current);
+        last = current;
 
-      if (found) {
-        let parentType = Writer.findNonPropParent(found as IType);
+        collection = Array.from(current!.children.values())
+          || Array.from(current!.props.values())
+          || [];
+        console.log("found", current);
+
+        i++;
+      } while (i < parts.length);
+
+      if (current) {
+        let parentType = Writer.findNonPropParent(current as IType);
 
         if (!pending.has(parentType.id)) {
           pending.set(parentType.id, parentType);

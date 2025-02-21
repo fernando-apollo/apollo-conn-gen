@@ -15,7 +15,7 @@ import PropObj from './props/prop_obj';
 import Context from '../context';
 import Prop from './props/prop';
 import Get from './get';
-import Res from './res';
+import Response from './response';
 import {OpenAPIV3} from "openapi-types";
 import Composed from "./comp";
 import {Scalar} from "./scalar";
@@ -45,7 +45,7 @@ export default class Factory {
     else if (schema.type === 'array' && schema.items) {
       // Array schema case.
       let parentName = parent.name;
-      if (parent instanceof Res) {
+      if (parent instanceof Response) {
         // Assume parent.parent is a GetOp.
         const get = parent.parent as Get;
         parentName = _.upperFirst(get.getGqlOpName());
@@ -58,7 +58,7 @@ export default class Factory {
     // array case
     else if (schema.type === 'object' && schema.properties) {
       // Object schema case.
-      result = new Obj(parent, (schema as any).name || parent.name, schema);
+      result = new Obj(parent, (schema as any).name || null, schema);
     }
     // Composed schema case.
     else if (schema.allOf || schema.oneOf) {
@@ -161,7 +161,7 @@ export default class Factory {
   public static fromResponse(_context: Context, parent: IType, mediaSchema: SchemaObject): IType {
     // const content = Factory.fromSchema(response, mediaSchema);
     // response.response = content;
-    return new Res(parent, 'r', mediaSchema);
+    return new Response(parent, 'r', mediaSchema);
   }
 
   public static fromParam(context: Context, parent: IType, p: ParameterObject | ReferenceObject): Param {

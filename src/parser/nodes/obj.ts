@@ -2,16 +2,14 @@ import Context from '../context';
 import {trace} from '../../log/trace';
 import {IType, Type} from './type';
 import {SchemaObject} from 'oas/dist/types';
-import Prop from "./props/prop";
 import Factory from "./factory";
 import Writer from "../io/writer";
 import Naming from "../utils/naming";
 import Ref from "./ref";
 import Arr from "./arr";
 import PropArray from "./props/prop_array";
-import _ from "lodash";
 import Get from "./get";
-import {RenderContext} from "../../prompts/theme";
+import Response from "./response"
 
 export default class Obj extends Type {
   constructor(parent: IType | undefined, name: string, public schema: SchemaObject) {
@@ -106,7 +104,7 @@ export default class Obj extends Type {
       // else is our parent an array?
       else if (parent instanceof Arr || parent instanceof PropArray) {
         // if so, syntethize a name based on the parent name
-        name = _.upperFirst(Naming.genParamName(Naming.getRefName(parentName) + 'Item'));
+        name = Naming.genTypeName(Naming.getRefName(parentName) + 'Item');
       }
       // if the parent is a response, we can use the operation name and append "Response"
       else if (parent instanceof Response) {
