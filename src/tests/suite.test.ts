@@ -373,12 +373,64 @@ test('test_018_testTMF637_SimpleRecursion', async () => {
   // await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 136);
 });
 
-/*test('test_018_testTMF637_Full', async () => {
+test('test_019_testUnionInParam', async () => {
   const paths = [
-    'get:/product>**'
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:array:#accounts>prop:ref:#AccountsItem>obj:#/c/s/Account>prop:scalar:id',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:array:#accounts>prop:ref:#AccountsItem>obj:#/c/s/Account>prop:scalar:state',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:array:#accounts>prop:ref:#AccountsItem>obj:#/c/s/Account>prop:scalar:stateReason',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:birthDate',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:firstName',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:gender',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:lastName',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:me',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:taxIdentifier',
+    'get:/consumer/{id}>res:r>ref:#/c/s/Consumer>obj:#/c/s/Consumer>prop:scalar:title'
   ]
-  await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 136);
-});*/
+
+  await run("js-mva-consumer-info_v1.yaml", paths, 1, 3);
+});
+
+test('test_020_testDuplicateRefPath', async () => {
+  const paths = [
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:ProductSelectorItemsItem>obj:ProductSelectorItemsItem>prop:array:#productPrice>prop:ref:#ProductPriceItem>obj:#/c/s/productPrice>prop:ref:#price>obj:#/c/s/price>prop:ref:#dutyFreeAmount>obj:#/c/s/money>prop:scalar:unit',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:ProductSelectorItemsItem>obj:ProductSelectorItemsItem>prop:array:#productPrice>prop:ref:#ProductPriceItem>obj:#/c/s/productPrice>prop:ref:#price>obj:#/c/s/price>prop:ref:#dutyFreeAmount>obj:#/c/s/money>prop:scalar:value',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:ProductSelectorItemsItem>obj:ProductSelectorItemsItem>prop:array:#productPrice>prop:ref:#ProductPriceItem>obj:#/c/s/productPrice>prop:ref:#price>obj:#/c/s/price>prop:ref:#taxIncludedAmount>obj:#/c/s/money>prop:scalar:unit',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:ProductSelectorItemsItem>obj:ProductSelectorItemsItem>prop:array:#productPrice>prop:ref:#ProductPriceItem>obj:#/c/s/productPrice>prop:ref:#price>obj:#/c/s/price>prop:ref:#taxIncludedAmount>obj:#/c/s/money>prop:scalar:value',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:ProductSelectorItemsItem>obj:ProductSelectorItemsItem>prop:array:#productPrice>prop:ref:#ProductPriceItem>obj:#/c/s/productPrice>prop:scalar:priceType',
+    'get:/productSelectorItems>res:r>ref:#/c/s/productSelectorItems>array:ProductSelectorItemsItem>obj:ProductSelectorItemsItem>prop:array:#productPrice>prop:ref:#ProductPriceItem>obj:#/c/s/productPrice>prop:scalar:recurringChargePeriod'
+  ]
+
+  await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 4);
+});
+
+test('test_021_testInlineItemsArray', async () => {
+  const paths = [
+    'get:/productSelectorItemDetails>res:r>ref:#/c/s/productSelectorItemDetails>obj:#/c/s/productSelectorItemDetails>prop:array:#usageConsumption>prop:obj:UsageConsumptionItem>obj:UsageConsumptionItem>prop:scalar:productId'
+  ]
+  await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 2);
+});
+
+test('test_024_TMF632_IndividualIdentification', async () => {
+  const paths = [
+    'get:/individual/{id}>res:r>ref:#/c/s/Individual>comp:#/c/s/Individual>ref:#/c/s/Party>comp:#/c/s/Party>ref:#/c/s/Entity>comp:#/c/s/Entity>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:id',
+    'get:/individual/{id}>res:r>ref:#/c/s/Individual>comp:#/c/s/Individual>obj:[anonymous:#/c/s/Individual]>prop:array:#individualIdentification>prop:ref:#IndividualIdentificationItem>comp:#/c/s/IndividualIdentification>obj:[anonymous:#/c/s/IndividualIdentification]>prop:scalar:identificationId'
+  ]
+  await run("TMF632-Party_Management-v5.0.0.oas.yaml", paths, 4, 9);
+});
+
+test('test_025_AdobeCommerce', async () => {
+  const paths = [
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:agreement_id',
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:checkbox_text',
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:content',
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:content_height',
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:is_active',
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:is_html',
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:mode',
+    'get:/V1/carts/licence>res:r>array:#/c/s/checkout-agreements-data-agreement-interface>ref:#/c/s/checkout-agreements-data-agreement-interface>obj:#/c/s/checkout-agreements-data-agreement-interface>prop:scalar:name'
+  ]
+  await run("adobe-commerce-swagger.json", paths, 242, 1);
+});
 
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false): Promise<string | undefined> {
