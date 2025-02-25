@@ -3,6 +3,7 @@ import En from "../nodes/en";
 import CircularRef from "../nodes/circular_ref";
 import PropArray from "../nodes/props/prop_array";
 import {IType} from "../nodes/type";
+import Composed from "../nodes/comp";
 
 export class T {
   public static isLeaf(type: IType): boolean {

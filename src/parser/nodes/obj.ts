@@ -32,7 +32,7 @@ export default class Obj extends Type {
     trace(context, '-> [obj:visit]', 'in ' + this.name);
 
     if (!context.inContextOf("Composed", this)) {
-      console.log('In object: ' + (this.name ? this.name : this.parent?.name));
+      trace(context, "[obj]", 'In object: ' + (this.name ? this.name : this.parent?.name));
     }
 
     this.visitProperties(context);
@@ -103,7 +103,7 @@ export default class Obj extends Type {
       }
       // else is our parent an array?
       else if (parent instanceof Arr || parent instanceof PropArray) {
-        // if so, syntethize a name based on the parent name
+        // if so, synthesize a name based on the parent name
         name = Naming.genTypeName(Naming.getRefName(parentName) + 'Item');
       }
       // if the parent is a response, we can use the operation name and append "Response"
@@ -115,7 +115,7 @@ export default class Obj extends Type {
       else if (parent instanceof Obj) {
         name = parentName + 'Obj';
       }
-      // extreme case -- we syntethize an anonymous name
+      // extreme case -- we synthesize an anonymous name
       else {
         name = `[anonymous:${this.parent!.name}]`;
       }

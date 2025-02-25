@@ -212,13 +212,15 @@ export default class Writer {
           // remove the current path from the selection array
           selection = selection.filter(s => s !== path);
 
+          if (current instanceof Composed)
+            current.consolidate(selection);
+
           // add all the props from the current node and exit loop
           current?.props.forEach(child => {
             if (T.isLeaf(child)) selection.push(child.path());
           });
           break;
-        }
-        else if (part === '**' && current) {
+        } else if (part === '**' && current) {
           // remove the current path from the selection array
           selection = selection.filter(s => s !== path);
 
@@ -229,21 +231,20 @@ export default class Writer {
           current = undefined;
           break;
         }
-        else {
-          current = collection.find(t => t.id === part);
-          if (!current) {
-            throw new Error("Could not find type: " + part + " from " + path + ", last: " + last?.pathToRoot());
-          }
 
-          // make sure we expand it before we move on to the next part
-          this.generator.expand(current);
-          last = current;
-
-          collection = Array.from(current!.children.values())
-            || Array.from(current!.props.values())
-            || [];
-          console.log("found", current);
+        current = collection.find(t => t.id === part);
+        if (!current) {
+          throw new Error("Could not find type: " + part + " from " + path + ", last: " + last?.pathToRoot());
         }
+
+        // make sure we expand it before we move on to the next part
+        this.generator.expand(current);
+        last = current;
+
+        collection = Array.from(current!.children.values())
+          || Array.from(current!.props.values())
+          || [];
+        // console.log("found", current);
 
         i++;
       }
@@ -280,7 +281,17 @@ export default class Writer {
   }
 
   private traverseTree(current: IType, selection: string[], pending: Map<string, IType>) {
-    T.traverse((current as Type), (child) => {
+    // we might be in a node far from the root, so we need to traverse upwards
+    // as well and add the props that we can find on the way
+    const source = current as Type;
+
+    source.ancestors()
+      .filter(t => t instanceof Prop)
+      .map(p => Writer.findNonPropParent(p))
+      .forEach(parent => pending.set(parent.id, parent))
+
+
+    T.traverse(source, (child) => {
       if (T.isLeaf(child)) {
         // this is a weird take but if the child is an array of scalars
         // then we want to avoid adding it twice
@@ -293,6 +304,9 @@ export default class Writer {
         }
       } else {
         this.generator.expand(child);
+
+        if (child instanceof Composed)
+          child.consolidate(selection);
       }
     });
   }

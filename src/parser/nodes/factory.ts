@@ -27,6 +27,7 @@ import Param from "./param/param";
 import En from "./en";
 import CircularRef from "./circular_ref";
 import Union from "./union";
+import {trace} from "../../log/trace";
 
 export default class Factory {
   public static createGet(name: string, op: Operation): Get {
@@ -51,7 +52,7 @@ export default class Factory {
         parentName = _.upperFirst(get.getGqlOpName());
       }
       else {
-        console.log('Factory.fromSchema >>> HERE');
+        trace(null, "[factory]",'Factory.fromSchema >>> HERE')
       }
       result = new Arr(parent, parentName, schema.items as ArraySchemaObject);
     }

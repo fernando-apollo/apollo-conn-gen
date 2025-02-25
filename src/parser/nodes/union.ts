@@ -35,7 +35,7 @@ export default class Union extends Type {
     trace(context, '-> [union:visit]', 'in: ' + schemas);
 
     if (!context.inContextOf("Composed", this)) {
-      console.log('In union: ' + this.parent?.name);
+      trace(context, "[union]", 'In union: ' + this.parent?.name);
     }
 
     for (const refSchema of this.schemas) {

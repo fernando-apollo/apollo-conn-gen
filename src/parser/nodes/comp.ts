@@ -32,7 +32,7 @@ export default class Composed extends Type {
 
     // If not in the context of a Composed or Param, log the composed schema.
     if (!context.inContextOf("Composed", this) && !context.inContextOf("Param", this)) {
-      console.log('In composed schema: ' + this.name);
+      trace(context, "[comp]", 'In composed schema: ' + this.name);
     }
 
     const composedSchema = this.schema;

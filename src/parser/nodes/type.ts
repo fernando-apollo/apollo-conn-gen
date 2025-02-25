@@ -69,7 +69,7 @@ export abstract class Type implements IType {
       collection = Array.from(current!.children.values())
         || Array.from(current!.props.values())
         || [];
-      console.log("found", current);
+      // console.log("found", current);
 
       i++;
     } while (i < parts.length);

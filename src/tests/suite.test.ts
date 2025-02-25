@@ -337,6 +337,41 @@ test('test_017_testMostPopularProduct_double-star', async () => {
   await run("most-popular-product.yaml", paths, 4, 4);
 });
 
+test('test_017_testMostPopularProduct_double-star - partial paths', async () => {
+  const paths = [
+    'get:/emailed/{period}.json>res:r>obj:emailedByPeriodJsonResponse>prop:array:#results>prop:ref:#ResultsItem>obj:#/c/s/EmailedArticle>**'
+  ]
+
+  await run("most-popular-product.yaml", paths, 4, 4);
+});
+
+test('test_018_testTMF637_01', async () => {
+  const paths = [
+    'get:/product>res:r>array:#/c/s/Product>ref:#/c/s/Product>comp:#/c/s/Product>ref:#/c/s/Entity>comp:#/c/s/Entity>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:id',
+    'get:/product>res:r>array:#/c/s/Product>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#agreementItem>prop:ref:#AgreementItemItem>comp:#/c/s/AgreementItemRef>obj:[anonymous:#/c/s/AgreementItemRef]>prop:scalar:agreementId',
+    'get:/product>res:r>array:#/c/s/Product>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#agreementItem>prop:ref:#AgreementItemItem>comp:#/c/s/AgreementItemRef>obj:[anonymous:#/c/s/AgreementItemRef]>prop:scalar:agreementName',
+    'get:/product>res:r>array:#/c/s/Product>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>obj:[anonymous:#/c/s/EntityRef]>prop:scalar:name',
+    'get:/product>res:r>array:#/c/s/Product>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>obj:[anonymous:#/c/s/BillingAccountRef]>prop:scalar:ratingType',
+    'get:/product>res:r>array:#/c/s/Product>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:ref:#billingAccount>comp:#/c/s/BillingAccountRef>ref:#/c/s/EntityRef>comp:#/c/s/EntityRef>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:id'
+  ]
+  await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 11);
+});
+
+test('test_018_testTMF637_02', async () => {
+  const paths = [
+    'get:/product>res:r>array:#/c/s/Product>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#agreementItem>prop:ref:#AgreementItemItem>comp:#/c/s/AgreementItemRef>ref:#/c/s/Extensible>obj:#/c/s/Extensible>prop:scalar:@baseType'
+  ]
+  await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 7);
+});
+
+test('test_018_testTMF637_Full', async () => {
+  const paths = [
+    'get:/product>**'
+  ]
+  await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 7);
+  // await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 136);
+});
+
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false): Promise<string | undefined> {
   const gen = await Gen.fromFile(`${base}/${file}`);
