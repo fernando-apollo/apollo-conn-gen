@@ -220,7 +220,10 @@ export default class Writer {
             if (T.isLeaf(child)) selection.push(child.path());
           });
           break;
-        } else if (part === '**' && current) {
+        }
+        /*
+        // TODO: pending - doesn't work properly
+        else if (part === '**' && current) {
           // remove the current path from the selection array
           selection = selection.filter(s => s !== path);
 
@@ -230,7 +233,7 @@ export default class Writer {
           // and break the loop
           current = undefined;
           break;
-        }
+        }*/
 
         current = collection.find(t => t.id === part);
         if (!current) {
