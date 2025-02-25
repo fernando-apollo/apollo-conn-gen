@@ -9,17 +9,18 @@ import {RenderContext} from "../../prompts/theme";
 import Naming from "../utils/naming";
 
 export default class CircularRef extends Type {
-  constructor(parent: IType, public child: IType) {
-    super(parent, child.name);
+  constructor(parent: IType, public ref: IType) {
+    super(parent, ref.name);
     // this.children = parent.children;
   }
 
   get id(): string {
-    return `circular-ref:#${this.name}`;
+    return `circular-ref:#${this.ref.id}`;
+    // return this.child.id;
   }
 
   forPrompt(_context: Context): string {
-    return `${Naming.getRefName(this.child.name)} (Circular Ref)`;
+    return `${Naming.getRefName(this.ref.name)} (Circular Ref in: ${this.parent?.id})`;
   }
 
   public add(child: IType): void {

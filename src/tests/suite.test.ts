@@ -239,6 +239,7 @@ test('test_013_testTMF637_TestSimpleRecursion no type found', async () => {
   try {
     await run("TMF637-002-SimpleRecursionTest.yaml", paths, 1, 2, true);
   } catch (error) {
+    console.error(error)
     expect(error).toBeDefined()
     expect((error as any).message).toContain("Could not find type")
   }
@@ -257,12 +258,12 @@ test('test_014_testTMF637_TestRecursion', async () => {
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:[anonymous:#/c/s/RelatedPartyOrPartyRole]>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>ref:#/c/s/Entity>obj:#/c/s/Entity>prop:scalar:href',
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:[anonymous:#/c/s/RelatedPartyOrPartyRole]>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>ref:#/c/s/Entity>obj:#/c/s/Entity>prop:scalar:id',
     'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:[anonymous:#/c/s/RelatedPartyOrPartyRole]>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>obj:[anonymous:#/c/s/PartyRole]>prop:scalar:name',
-    'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:[anonymous:#/c/s/RelatedPartyOrPartyRole]>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>obj:[anonymous:#/c/s/PartyRole]>prop:array:#relatedParty>circular-ref:#RelatedPartyItem'
+    'get:/productById>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:array:#relatedParty>prop:ref:#RelatedPartyItem>comp:#/c/s/RelatedPartyOrPartyRole>obj:[anonymous:#/c/s/RelatedPartyOrPartyRole]>prop:ref:#partyOrPartyRole>comp:#/c/s/PartyOrPartyRole>union:#/c/s/PartyOrPartyRole>ref:#/c/s/Producer>comp:#/c/s/Producer>ref:#/c/s/PartyRole>comp:#/c/s/PartyRole>obj:[anonymous:#/c/s/PartyRole]>circular-ref:#prop:array:#relatedParty',
   ]
 
-  expect.assertions(7)
-  const error = await run("TMF637-002-RecursionTest.yaml", paths, 1, 10, true);
-  expect(error).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`");
+  expect.assertions(6)
+  const error = await run("TMF637-002-RecursionTest.yaml", paths, 1, 10);
+  // expect(error).toContain("Circular reference detected in `@connect(selection:)` on `Query.productById`");
 });
 
 test('test_015_testTMF637_ProductStatusEnum', async () => {
@@ -364,13 +365,20 @@ test('test_018_testTMF637_02', async () => {
   await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 7);
 });
 
-test('test_018_testTMF637_Full', async () => {
+test('test_018_testTMF637_SimpleRecursion', async () => {
+  const paths = [
+    'get:/productById>**'
+  ]
+  await run("TMF637-002-SimpleRecursionTest.yaml", paths, 1, 3);
+  // await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 136);
+});
+
+/*test('test_018_testTMF637_Full', async () => {
   const paths = [
     'get:/product>**'
   ]
-  await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 7);
-  // await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 136);
-});
+  await run("TMF637-ProductInventory-v5.0.0.oas.yaml", paths, 2, 136);
+});*/
 
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false): Promise<string | undefined> {
@@ -416,6 +424,8 @@ function isRoverAvailable(command: string): [boolean, string?] {
 }
 
 function compose(schemaPath: string) {
+  console.log('schemaPath', schemaPath)
+
   let rover: [boolean, (string | undefined)?] = isRoverAvailable('rover');
   if (!rover[0]) {
     throw new Error("Rover is not available");

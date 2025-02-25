@@ -2,6 +2,7 @@ import Context from "../context";
 import Prop from "./props/prop";
 import Writer from "../io/writer";
 import {trace} from "../../log/trace";
+import Factory from "./factory";
 
 export interface IType {
   name: string;
@@ -134,7 +135,17 @@ export abstract class Type implements IType {
   }
 
   public add(child: IType): void {
-    this.children.push(child);
+    const paths: IType[] = this.ancestors();
+    const contains: boolean = paths.map(p => p.id).includes(child.id);
+
+    if (contains) {
+      trace(null, '-> [type:add]', 'already contains child: ' + child.id);
+      const ancestor: IType = paths[paths.map(p => p.id).indexOf(child.id)];
+      const wrapper = Factory.fromCircularRef(this, ancestor);
+      this.children.push(wrapper);
+    }
+    else
+      this.children.push(child);
   };
 
   /*

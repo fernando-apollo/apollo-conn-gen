@@ -6,7 +6,6 @@ import Writer from "./parser/io/writer";
 import Ref from "./parser/nodes/ref";
 import {IType, Type} from "./parser/nodes/type";
 import Composed from "./parser/nodes/comp";
-import PropRef from "./parser/nodes/props/prop_ref";
 import Union from "./parser/nodes/union";
 
 const originalConsole = {

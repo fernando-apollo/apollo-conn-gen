@@ -79,7 +79,8 @@ const baseTheme: CustomTheme = {
     const baseColor = !isLeaf ? this.style.directory : this.style.file
     const color = context.isActive ? this.style.active : baseColor
 
-    return color(line)
+    const isDisabled = item instanceof CircularRef
+    return isDisabled ? this.style.disabled(`${line} ${this.labels.disabled}`) : color(line)
   }
 }
 
@@ -144,14 +145,14 @@ export const typesPrompt =
         if (isEnterKey(key)) {
           setStatus('done')
           done(selected)
-        }
-        else if (isSelectKey(key)) {
+        } else if (isSelectKey(key)) {
+          if (activeItem instanceof CircularRef) return
+
           if (selected.includes(activeItem.path()))
             setSelected(selected.filter(path => path !== activeItem.path()))
           else
             setSelected([...selected, activeItem.path()]);
-        }
-        else if (isSelectAllKey(key)) {
+        } else if (isSelectAllKey(key)) {
           const children = (current instanceof Composed
             ? current.props.values()
             : current!.children.values())
@@ -161,15 +162,13 @@ export const typesPrompt =
             .map(child => child.path()) ?? []
 
           setSelected([...selected, ...filtered]);
-        }
-        else if (isSelectNoneKey(key)) {
+        } else if (isSelectNoneKey(key)) {
           const filtered = activeItem.parent?.children
             .filter(child => isTypeLeaf(child) && selected.includes(child.path()))
             .map(child => child.path()) ?? []
 
           setSelected(selected.filter(path => !filtered.includes(path)));
-        }
-        else {
+        } else {
           const isLeaf = isTypeLeaf(activeItem)
 
           if ((isSpaceKey(key) || isRightKey(key)) && !isLeaf) {
@@ -189,12 +188,10 @@ export const typesPrompt =
               next = (next + offset + items.length) % items.length
               setActive(next)
             }
-          }
-          else if (isBackspaceKey(key) || isLeftKey(key)) {
+          } else if (isBackspaceKey(key) || isLeftKey(key)) {
             setCurrent(current?.parent)
             setActive(bounds.first)
-          }
-          else if (isEscapeKey(key) && allowCancel) {
+          } else if (isEscapeKey(key) && allowCancel) {
             setStatus('canceled')
             done([])
           }

@@ -3,7 +3,7 @@ import En from "../nodes/en";
 import CircularRef from "../nodes/circular_ref";
 import PropArray from "../nodes/props/prop_array";
 import {IType} from "../nodes/type";
-import Composed from "../nodes/comp";
+import Prop from "../nodes/props/prop";
 
 export class T {
   public static isLeaf(type: IType): boolean {
@@ -11,6 +11,10 @@ export class T {
       || type instanceof En
       || type instanceof CircularRef
       || (type instanceof PropArray && type.items instanceof PropScalar);
+  }
+
+  public static isPropScalar(type: IType): boolean {
+    return type instanceof PropScalar;
   }
 
   public static traverse(node: IType, callback: (node: IType) => void): void {

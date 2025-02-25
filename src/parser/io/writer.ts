@@ -31,9 +31,7 @@ export default class Writer {
   }
 
   flush(): string {
-    let result = this.buffer.join('');
-    console.log(result);
-    return result;
+    return this.buffer.join('');
   }
 
   public writeSchema(writer: Writer, pending: Map<string, IType>, selection: string[]): void {
@@ -200,12 +198,14 @@ export default class Writer {
   generate(selection: string[]) {
     const pending: Map<string, IType> = new Map();
 
+    selection = this.collectExpandedPaths(selection);
+
     for (const path of selection) {
       let collection = Array.from(this.generator.paths.values());
-      const parts = path.split(">");
       let current, last: IType | undefined;
 
       let i = 0;
+      const parts = path.split(">");
       do {
         const part = parts[i].replace(/#\/c\/s/g, '#/components/schemas');
         if (part === '*') {
@@ -221,19 +221,6 @@ export default class Writer {
           });
           break;
         }
-        /*
-        // TODO: pending - doesn't work properly
-        else if (part === '**' && current) {
-          // remove the current path from the selection array
-          selection = selection.filter(s => s !== path);
-
-          // add all the props from the current node and exit loop
-          this.traverseTree(current, selection, pending);
-
-          // and break the loop
-          current = undefined;
-          break;
-        }*/
 
         current = collection.find(t => t.id === part);
         if (!current) {
@@ -247,13 +234,14 @@ export default class Writer {
         collection = Array.from(current!.children.values())
           || Array.from(current!.props.values())
           || [];
-        // console.log("found", current);
 
         i++;
       }
       while (i < parts.length);
 
       if (current) {
+        // TODO: this seems redundant, we've already walked the parent AND can be also
+        // contained in the context stack
         let parentType = Writer.findNonPropParent(current as IType);
 
         if (!pending.has(parentType.id)) {
@@ -338,5 +326,62 @@ export default class Writer {
       type instanceof Composed ||
       type instanceof CircularRef
     )
+  }
+
+  private collectExpandedPaths(selection: string[]) {
+    const newSelection = new Set<string>;
+    const expands = selection
+      .filter(p => p.endsWith('>**'));
+    const filtered = expands
+      .map(p => p.replace('>**', ''))
+
+    const paths = Array.from(this.generator.paths.values());
+    const nodes = filtered.map(p => this.collectPaths(p, paths))
+      /*.map(stack => _.last(stack)!.id)
+      .filter(id => selection.includes(id))
+      .forEach(id => newSelection.add(id));*/
+
+    nodes.forEach(stack => {
+      const root = _.last(stack)!;
+      T.traverse(root, (child) => {
+        if (T.isPropScalar(child))
+          newSelection.add(child.path());
+        else
+          this.generator.expand(child);
+      });
+    });
+
+    // finally remove the expanded paths from the selection
+    return [...newSelection, ...selection.filter(p => !expands.includes(p))];
+  }
+
+  collectPaths(path: string, collection: IType[]): IType[] {
+    const stack: IType[] = []
+    let current, last: IType | undefined;
+
+    let i = 0;
+    const parts = path.split(">");
+    do {
+      const part = parts[i].replace(/#\/c\/s/g, '#/components/schemas');
+
+      current = collection.find(t => t.id === part);
+      if (!current) {
+        throw new Error("Could not find type: " + part + " from " + path + ", last: " + last?.pathToRoot());
+      }
+
+      // make sure we expand it before we move on to the next part
+      this.generator.expand(current);
+      last = current;
+
+      collection = Array.from(current!.children.values())
+        || Array.from(current!.props.values())
+        || [];
+
+      stack.push(current);
+      i++;
+    }
+    while (i < parts.length);
+
+    return stack;
   }
 }
