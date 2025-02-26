@@ -450,6 +450,26 @@ test('test_025_AdobeCommerce', async () => {
   await run("adobe-commerce-swagger.json", paths, 242, 1);
 });
 
+test('test_025_AdobeCommerce_customer-paths', async () => {
+  const paths = [
+    'get:/V1/customers/{customerId}>**',
+    'get:/V1/customers/{customerId}/billingAddress>**',
+    'get:/V1/customers/{customerId}/companies>**',
+    'get:/V1/customers/{customerId}/companies/{companyId}>**',
+    'get:/V1/customers/{customerId}/confirm>**',
+    'get:/V1/customers/{customerId}/password/resetLinkToken/{resetPasswordLinkToken}>**',
+    'get:/V1/customers/{customerId}/permissions/readonly>**',
+    'get:/V1/customers/{customerId}/shippingAddress>**',
+    'get:/V1/customers/addresses/{addressId}>**',
+    'get:/V1/customers/companies>**',
+    'get:/V1/customers/me>**',
+    'get:/V1/customers/me/billingAddress>**',
+    'get:/V1/customers/me/shippingAddress>**',
+    'get:/V1/customers/search>**',
+  ]
+  await run("adobe-commerce-swagger.json", paths, 242, 18);
+});
+
 // run test
 async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false, skipValidation: boolean = false): Promise<string | undefined> {
   const gen = await Gen.fromFile(`${base}/${file}`, {skipValidation});
