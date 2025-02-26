@@ -11,6 +11,10 @@ import {trace} from '../log/trace';
 import Factory from './nodes/factory';
 import Writer from "./io/writer";
 
+type GenOptions = {
+  skipValidation: boolean,
+}
+
 export default class Gen {
   public parser: Oas;
   // public prompt: Prompt;
@@ -24,6 +28,9 @@ export default class Gen {
 
   public static async fromFile(
     sourceFile: string,
+    options: GenOptions = {
+      skipValidation: false
+    },
     // prompt: Prompt
   ): Promise<Gen> {
     if (!fs.existsSync(sourceFile)) {
@@ -42,12 +49,13 @@ export default class Gen {
     const normalised: OpenAPI.Document = await normalizer.bundle();
     console.log('loaded bundle');
 
-    const validated: boolean = await normalizer.validate();
-    if (!validated) {
-      throw new Error('Could not validate source file');
+    if (!options.skipValidation) {
+      const validated: boolean = await normalizer.validate();
+      if (!validated) {
+        console.log('validated', validated);
+        throw new Error('Could not validate source file');
+      }
     }
-
-    console.log('validated', validated);
 
     const json = await normalizer.convert();
     console.log('converted');

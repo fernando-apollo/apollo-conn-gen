@@ -410,6 +410,35 @@ test('test_021_testInlineItemsArray', async () => {
   await run("js-mva-homepage-product-selector_v3.yaml", paths, 3, 2);
 });
 
+test('test_022_common-room_01', async () => {
+  /*
+  'get:/activityTypes>**',
+  'get:/api-token-status>**',
+  'get:/members>**',
+  'get:/members/customFields>**',
+  'get:/segments>**',
+  'get:/segments/:id/status>**',
+  'get:/tags>**',
+  'get:/tags/{id}>**',
+  'get:/user/{email}>**',
+  */
+  const paths = [
+    // 'get:/activityTypes>**',
+    // 'get:/api-token-status>**',
+    // 'get:/members>**',
+    // 'get:/members/customFields>**',
+    // 'get:/segments>**',
+    // 'get:/segments/:id/status>**',
+    'get:/tags>**',
+    'get:/tags/{id}>**',
+    // 'get:/user/{email}>**',
+  ]
+
+  // last 2 args: don't expect to fail, and skip validation
+  await run("common-room-original.json", paths, 9, 6, false, true);
+  // await run("common-room-original.json", paths, 9, 16, false, true);
+});
+
 test('test_024_TMF632_IndividualIdentification', async () => {
   const paths = [
     'get:/individual/{id}>res:r>ref:#/c/s/Individual>comp:#/c/s/Individual>ref:#/c/s/Party>comp:#/c/s/Party>ref:#/c/s/Entity>comp:#/c/s/Entity>ref:#/c/s/Addressable>obj:#/c/s/Addressable>prop:scalar:id',
@@ -433,8 +462,8 @@ test('test_025_AdobeCommerce', async () => {
 });
 
 // run test
-async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false): Promise<string | undefined> {
-  const gen = await Gen.fromFile(`${base}/${file}`);
+async function run(file: string, paths: string[], pathsSize: number, typesSize: number, shouldFail: boolean = false, skipValidation: boolean = false): Promise<string | undefined> {
+  const gen = await Gen.fromFile(`${base}/${file}`, {skipValidation});
   await gen.visit();
 
   expect(gen.paths).toBeDefined();
@@ -485,7 +514,7 @@ function compose(schemaPath: string) {
 
   const supergraphFile = path.join(os.tmpdir(), 'supergraph.yaml');
   const content: string = `
-federation_version: =2.10.0-preview.3
+federation_version: =2.10.0
 subgraphs:
   test_spec:
     routing_url: http://localhost # this value is ignored
