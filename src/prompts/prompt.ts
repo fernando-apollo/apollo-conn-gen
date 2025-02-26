@@ -111,7 +111,7 @@ export const typesPrompt =
   createPrompt<string[] | [], PromptConfig>(
     (config, done) => {
       const {
-        pageSize = 10,
+        pageSize = 40,
         loop = false,
         allowCancel = false,
         cancelText = 'Canceled.',

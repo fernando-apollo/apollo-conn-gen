@@ -411,31 +411,20 @@ test('test_021_testInlineItemsArray', async () => {
 });
 
 test('test_022_common-room_01', async () => {
-  /*
-  'get:/activityTypes>**',
-  'get:/api-token-status>**',
-  'get:/members>**',
-  'get:/members/customFields>**',
-  'get:/segments>**',
-  'get:/segments/:id/status>**',
-  'get:/tags>**',
-  'get:/tags/{id}>**',
-  'get:/user/{email}>**',
-  */
   const paths = [
-    // 'get:/activityTypes>**',
-    // 'get:/api-token-status>**',
-    // 'get:/members>**',
-    // 'get:/members/customFields>**',
-    // 'get:/segments>**',
-    // 'get:/segments/:id/status>**',
+    'get:/activityTypes>**',
+    'get:/api-token-status>**',
+    'get:/members>**',
+    'get:/members/customFields>**',
+    'get:/segments>**',
+    'get:/segments/:id/status>**',
     'get:/tags>**',
     'get:/tags/{id}>**',
-    // 'get:/user/{email}>**',
+    'get:/user/{email}>**',
   ]
 
   // last 2 args: don't expect to fail, and skip validation
-  await run("common-room-original.json", paths, 9, 6, false, true);
+  await run("common-room-core.json", paths, 9, 15, false, true);
   // await run("common-room-original.json", paths, 9, 16, false, true);
 });
 

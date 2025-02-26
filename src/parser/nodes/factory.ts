@@ -27,7 +27,7 @@ import Param from "./param/param";
 import En from "./en";
 import CircularRef from "./circular_ref";
 import Union from "./union";
-import {trace} from "../../log/trace";
+import {trace, warn} from "../../log/trace";
 
 export default class Factory {
   public static createGet(name: string, op: Operation): Get {
@@ -50,15 +50,15 @@ export default class Factory {
         // Assume parent.parent is a GetOp.
         const get = parent.parent as Get;
         parentName = _.upperFirst(get.getGqlOpName());
-      }
-      else {
-        trace(null, "[factory]",'Factory.fromSchema >>> HERE')
+      } else {
+        trace(null, "[factory]", 'Factory.fromSchema >>> HERE')
       }
       result = new Arr(parent, parentName, schema.items as ArraySchemaObject);
     }
     // array case
-    else if (schema.type === 'object' && schema.properties) {
-      // Object schema case.
+    else if (schema.type === 'object') {
+      if (!schema.properties)
+        warn(null, "[factory]", "Object has no properties: " + JSON.stringify(schema, null, 2) + " in: " + parent.pathToRoot())
       result = new Obj(parent, (schema as any).name || null, schema);
     }
     // Composed schema case.
@@ -72,8 +72,7 @@ export default class Factory {
       if (typeStr != null) {
         if (typeStr === 'array') {
           throw new Error(`Should have been handled already? ${typeStr}, schema: ${JSON.stringify(schema)}`);
-        }
-        else if (schema.enum != null) {
+        } else if (schema.enum != null) {
           result = new En(parent, schema, (schema as any).enum);
         }
         // scalar case
@@ -81,14 +80,11 @@ export default class Factory {
           const scalarType = GqlUtils.getGQLScalarType(schema);
           result = new Scalar(parent, scalarType, schema);
         } else {
-          throw new Error(`Cannot handle property type ${typeStr}, schema: ${JSON.stringify(schema)}`
-          );
+          throw new Error(`Cannot handle property type ${typeStr}, schema: ${JSON.stringify(schema)}`);
         }
-      }
-      else if (schema.enum != null) {
+      } else if (schema.enum != null) {
         result = new En(parent, schema, (schema as any).enum);
-      }
-      else {
+      } else {
         throw new Error(`Cannot handle schema ${parent.pathToRoot()}, schema: ${JSON.stringify(schema)}`);
       }
     }
@@ -176,8 +172,7 @@ export default class Factory {
         throw new Error('Schema not found for ref: ' + ref.$ref);
       }
       param = schema as ParameterObject;
-    }
-    else {
+    } else {
       param = p as ParameterObject;
     }
 

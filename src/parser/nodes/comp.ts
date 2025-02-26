@@ -7,12 +7,10 @@ import Factory from "./factory";
 import Writer from "../io/writer";
 import Naming from "../utils/naming";
 import Ref from "./ref";
-import PropRef from "./props/prop_ref";
-
-;
+import _ from "lodash";
 
 export default class Composed extends Type {
-  constructor(parent: IType | undefined, public name: string, public schema: SchemaObject) {
+  constructor(parent: IType | undefined, public name: string, public schema: SchemaObject, public consolidated: boolean = false) {
     super(parent, name);
   }
 
@@ -86,6 +84,7 @@ export default class Composed extends Type {
 
   select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '-> [comp::select]', `-> in: ${this.name}`);
+    if (!this.consolidated) this.consolidate(selection)
 
     const composedSchema = this.schema;
     if (composedSchema.allOf != null) {
@@ -183,6 +182,8 @@ export default class Composed extends Type {
 
     // copy all collected props from children into this node
     props.forEach((prop) => this.props.set(prop.name, prop));
+
+    this.consolidated = true
 
     // and return the types.ts we've used
     return ids

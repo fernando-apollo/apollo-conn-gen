@@ -7,6 +7,7 @@ import Ref from "./parser/nodes/ref";
 import {IType, Type} from "./parser/nodes/type";
 import Composed from "./parser/nodes/comp";
 import Union from "./parser/nodes/union";
+import figures from "@inquirer/figures";
 
 const originalConsole = {
   log: console.log,
@@ -32,8 +33,7 @@ async function main(sourceFile: string, opts: any): Promise<void> {
       (type as any).consolidate([])
 
       result = Array.from(type.props.values());
-    }
-    else {
+    } else {
       // top level paths
       result = gen.expand(type);
 
@@ -52,12 +52,27 @@ async function main(sourceFile: string, opts: any): Promise<void> {
     return result
   }
 
-  const paths = await typesPrompt({
-    message: "Navigate spec and choose types.ts",
-    types,
-    context: gen.context!,
-    expandFn: expandType
-  });
+  let pathSet = Array.from(gen.paths.values());
+
+  if (opts.grep !== '*')
+    pathSet = pathSet.filter(p => p.path().includes(opts.grep))
+
+  if (opts.listPaths) {
+    pathSet.forEach(path => console.info(figures.triangleRight + ' ' + path.path()))
+    return;
+  }
+
+  let paths: Array<string> = []
+  if (!opts.selectionPrompt) {
+    paths = pathSet.map(p => p.path() + ">**")
+  } else {
+    paths = await typesPrompt({
+      message: "Navigate spec and choose types.ts",
+      types: pathSet,
+      context: gen.context!,
+      expandFn: expandType
+    });
+  }
 
   console.info('selected :=', paths);
 
@@ -71,6 +86,9 @@ program
   .version('0.0.1')
   .argument('<source>', 'source spec (yaml or json)')
   .option('-i --skip-validation', 'Do not validate the spec', false)
+  .option('-n --no-selection-prompt', 'Generates all [filtered] paths without prompting for a selection', false)
+  .option('-l --list-paths', 'Only list the paths that can be generated', false)
+  .option('-g --grep <regex>', 'Filter the list of paths with the passed expression', "*")
   .parse(process.argv);
 
 const source = program.args[0];

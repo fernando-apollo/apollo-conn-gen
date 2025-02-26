@@ -14,7 +14,7 @@ import Ref from "./ref";
 export default class Union extends Type {
   public schemas: SchemaObject[];
 
-  constructor(parent: IType, name: string, schemas: SchemaObject[]) {
+  constructor(parent: IType, name: string, schemas: SchemaObject[], public consolidated: boolean = false) {
     super(parent, name);
     this.schemas = schemas;
   }
@@ -123,6 +123,8 @@ export default class Union extends Type {
 
   public select(context: Context, writer: Writer, selection: string[]): void {
     trace(context, '-> [union::select]', `-> in: ${this.name}`);
+    if (!this.consolidated) this.consolidate(selection)
+
     const selected = this.selectedProps(selection);
 
     for (const prop of selected) {
@@ -168,6 +170,8 @@ export default class Union extends Type {
 
     // copy all collected props from children into this node
     props.forEach((prop) => this.props.set(prop.name, prop));
+
+    this.consolidated = true
 
     // and return the types.ts we've used
     return ids

@@ -12,6 +12,8 @@ import Union from "../nodes/union";
 import Composed from "../nodes/comp";
 import CircularRef from "../nodes/circular_ref";
 import {T} from "../utils/type_utils";
+import PropArray from "../nodes/props/prop_array";
+import PropScalar from "../nodes/props/prop_scalar";
 
 export default class Writer {
   buffer: string[];
@@ -344,7 +346,7 @@ export default class Writer {
     nodes.forEach(stack => {
       const root = _.last(stack)!;
       T.traverse(root, (child) => {
-        if (T.isPropScalar(child))
+        if (T.isPropScalar(child) || (child instanceof PropArray && child.items instanceof PropScalar))
           newSelection.add(child.path());
         else
           this.generator.expand(child);
