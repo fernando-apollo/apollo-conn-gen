@@ -13,11 +13,11 @@ const originalConsole = {
 };
 
 
-async function main(sourceFile: string): Promise<void> {
+async function main(sourceFile: string, opts: any): Promise<void> {
   console.log = () => {
   };
 
-  const gen = await Gen.fromFile(sourceFile);
+  const gen = await Gen.fromFile(sourceFile, opts);
   await gen.visit();
 
   let types = Array.from(gen.paths!.values());
@@ -70,7 +70,8 @@ const program = new Command();
 program
   .version('0.0.1')
   .argument('<source>', 'source spec (yaml or json)')
+  .option('-i --skip-validation', 'Do not validate the spec', false)
   .parse(process.argv);
 
 const source = program.args[0];
-main(source).then(() => console.log('done'));
+main(source, program.opts()).then(() => console.log('done'));
