@@ -13,7 +13,6 @@ const originalConsole = {
   log: console.log,
 };
 
-
 async function main(sourceFile: string, opts: any): Promise<void> {
   console.log = () => {
   };
@@ -54,23 +53,26 @@ async function main(sourceFile: string, opts: any): Promise<void> {
 
   let pathSet = Array.from(gen.paths.values());
 
-  if (opts.grep !== '*')
-    pathSet = pathSet.filter(p => p.path().includes(opts.grep))
+  if (opts.grep !== '*') {
+    const regex = new RegExp(opts.grep, 'ig');
+    pathSet = pathSet.filter(p => regex.test(p.path()))
+  }
 
   if (opts.listPaths) {
-    pathSet.forEach(path => console.info(figures.triangleRight + ' ' + path.path()))
+    pathSet.forEach(path => console.info(path.path()))
     return;
   }
 
   let paths: Array<string> = []
-  if (!opts.selectionPrompt) {
+  if (opts.skipSelection) {
     paths = pathSet.map(p => p.path() + ">**")
   } else {
     paths = await typesPrompt({
       message: "Navigate spec and choose types.ts",
       types: pathSet,
       context: gen.context!,
-      expandFn: expandType
+      expandFn: expandType,
+      pageSize: parseInt(opts.pageSize)
     });
   }
 
@@ -85,10 +87,11 @@ const program = new Command();
 program
   .version('0.0.1')
   .argument('<source>', 'source spec (yaml or json)')
-  .option('-i --skip-validation', 'Do not validate the spec', false)
-  .option('-n --no-selection-prompt', 'Generates all [filtered] paths without prompting for a selection', false)
+  .option('-i --skip-validation', 'Skip validation step', false)
+  .option('-n --skip-selection', 'Generate all [filtered] paths without prompting for a selection', false)
   .option('-l --list-paths', 'Only list the paths that can be generated', false)
   .option('-g --grep <regex>', 'Filter the list of paths with the passed expression', "*")
+  .option('-p --page-size <num>', 'Number of rows to display in selection mode', "10")
   .parse(process.argv);
 
 const source = program.args[0];
