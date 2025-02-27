@@ -68,7 +68,7 @@ async function main(sourceFile: string, opts: any): Promise<void> {
     paths = pathSet.map(p => p.path() + ">**")
   } else {
     paths = await typesPrompt({
-      message: "Navigate spec and choose types.ts",
+      message: "Navigate spec and select the fields to use in the connector",
       types: pathSet,
       context: gen.context!,
       expandFn: expandType,
