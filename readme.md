@@ -49,7 +49,7 @@ This will display an ouptut similar to the following:
 key to select all paths, or the `n` key to deselect all paths.
 
 Once you've selected the paths you want to generate, press the `Enter` key to generate the Apollo Connector. Here's
-an example of the output:
+an example of the output when selecting all the fields from `[GET] /pet/{petId`:
 
 ```graphql
 extend schema
@@ -107,3 +107,63 @@ type Query {
     )
 }
 ```
+
+## Options
+
+The tool allows listing paths and filtering them using a regular expression. This is useful when you have large specs
+and only want to generate a subset of the paths. First, you can list all the paths using the `-l` flag:
+
+```shell
+node --no-warnings ./dist/index.js ./tests/petstore.yaml --list-paths
+
+get:/pet/{petId}
+get:/pet/findByStatus
+get:/pet/findByTags
+get:/store/inventory
+get:/store/order/{orderId}
+get:/user/{username}
+get:/user/login
+get:/user/logout
+```
+
+### Filtering paths
+If you'd like to filter the paths using a regular expression, you can use the `-g` flag. For example, to only list the
+operations ending with an argument, you can use the following command:
+
+```shell
+node --no-warnings ./dist/index.js ./tests/petstore.yaml  --list-paths  --grep "{\\w+}$"
+
+get:/pet/{petId}
+get:/store/order/{orderId}
+```
+
+or, for instance, filtering by a specific path:
+
+```shell
+node --no-warnings ./dist/index.js ./tests/petstore.yaml  --list-paths  --grep "/pet/"
+
+get:/pet/{petId}
+get:/pet/findByTags
+```
+
+## Skipping validation
+
+By default, the tool will validate the OAS specification before generating the Apollo Connector. However, sometimes 
+specifications are not fully compliant with the OAS standard, or you may want to skip this step for other reasons. To
+do so, simply add the `-i` (or `--skip-validation`) flag to the command.
+
+## Page size
+
+When selecting paths, the tool will display a list of paths with a default page size of 10. You can change this value
+using the `-p` (or `--page-size`) flag. For example, to display 40 rows per page, you can use the following command:
+
+```shell
+node --no-warnings ./dist/index.js ./tests/petstore.yaml  --page-size 40
+```
+
+## Generating all paths without selection
+
+Whilst this option is not recommended for large specifications, you can generate all paths without prompting for a
+specific selection. To do so, you can use the `-n` (or `--skip-selection`) flag. This may result in a very large
+Apollo Connector schema, and might take a long time. Also, it kind of defeats the purpose of generating a connector based
+on a specific set of paths and fields, so use with caution.
