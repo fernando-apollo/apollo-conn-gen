@@ -109,16 +109,22 @@ export default class Get extends Type {
   }
 
   private visitResponses = (context: Context) => {
-    if (!this.operation.getResponseStatusCodes().includes('200')) {
+    let statusCodes = this.operation.getResponseStatusCodes();
+
+    if (!statusCodes.includes('200') && !statusCodes.includes("default")) {
       throw new Error('Could not find a valid 200 response');
     }
 
-    const response = this.operation.schema.responses!['200'];
-    if (!response) {
-      throw new Error('Could not find a 200 response');
+    let responses = this.operation.schema.responses;
+    if (responses!['200']) {
+      this.visitResponse(context, '200', responses!['200'] as ResponseObject);
     }
-
-    this.visitResponse(context, '200', response as ResponseObject);
+    else if (responses!['default']) {
+      this.visitResponse(context, 'default', responses!['default'] as ResponseObject);
+    }
+    else {
+      throw new Error("Could not find a '200' or 'default' response");
+    }
   };
 
   private visitResponse(context: Context, code: string, response: ResponseObject): void {
@@ -135,7 +141,12 @@ export default class Get extends Type {
       } else {
         this.visitResponseContent(context, code, json);
       }
-    } else {
+    }
+    else if (code === "default") {
+      // there is no response for this operation
+      // TODO: should we synthesize one?
+    }
+    else {
       throw new Error('Not yet implemented for: ' + JSON.stringify(response));
     }
   }
