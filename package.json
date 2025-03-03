@@ -4,8 +4,9 @@
   "description": "Generates an Apollo Connector from an OpenAPI 3.x specification (YAML or JSON)",
   "main": "dist/index.js",
   "types": "dist/index.d.js",
+  "engineStrict": true,
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build --force",
     "test": "jest"
   },
   "dependencies": {
@@ -16,7 +17,7 @@
     "lodash": "^4.17.21",
     "oas": "^25.3.0",
     "oas-normalize": "^12.1.0",
-    "yoctocolors": "^2.1.1"
+    "yoctocolors-cjs": "^2.1.2"
   },
   "devDependencies": {
     "@types/inquirer": "^9.0.7",
@@ -29,5 +30,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "volta": {
+    "node": "16.20.2"
+  }
 }

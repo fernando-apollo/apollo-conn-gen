@@ -3,7 +3,6 @@ import {CustomTheme, RenderContext} from "../theme";
 import {Status} from "@inquirer/core";
 import {IType} from "../../parser/nodes/type";
 import PropScalar from "../../parser/nodes/props/prop_scalar";
-import colors from 'yoctocolors';
 
 // const theme: CustomTheme = {
 //   prefix: {

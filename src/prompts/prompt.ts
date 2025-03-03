@@ -1,4 +1,4 @@
-import colors from 'yoctocolors';
+import colors from 'yoctocolors-cjs'
 
 import {
   createPrompt,

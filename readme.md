@@ -70,14 +70,12 @@ node ./dist/index.js <path-to-your-oas-file>
 
 Replace `<path-to-your-oas-file>` with the relative or absolute path to your OAS YAML or JSON file.
 
-*Note: to remove warnings from the node commnand you can use the `--no-warnings` flag.*
-
 ### Example with Petstore
 
 *Note: the petstore spec can be downloaded from (<https://petstore3.swagger.io>)*
 
 ```bash
-node --no-warnings ./dist/index.js ./tests/petstore.yaml
+node ./dist/index.js ./tests/petstore.yaml
 ```
 
 The output should be similar to the following:
@@ -168,7 +166,7 @@ node ./dist/index.js -h
 The tool allows filtering the list of paths using a regular expression. This is useful when you have large specs and only want to generate (or list) a subset. As shown above, you can list all the paths using the `-l` flag:
 
 ```shell
-node --no-warnings ./dist/index.js ./tests/petstore.yaml --list-paths
+node ./dist/index.js ./tests/petstore.yaml --list-paths
 
 get:/pet/{petId}
 get:/pet/findByStatus
@@ -183,7 +181,7 @@ get:/user/logout
 If you'd like to filter the paths using a regular expression, you can use the `-g` flag. For example, to only list the operations ending with an argument, you can use the following command:
 
 ```shell
-node --no-warnings ./dist/index.js ./tests/petstore.yaml  --list-paths  --grep "{\\w+}$"
+node ./dist/index.js ./tests/petstore.yaml  --list-paths  --grep "{\\w+}$"
 
 get:/pet/{petId}
 get:/store/order/{orderId}
@@ -192,7 +190,7 @@ get:/store/order/{orderId}
 or, for instance, filtering by a specific path:
 
 ```shell
-node --no-warnings ./dist/index.js ./tests/petstore.yaml  --list-paths  --grep "/pet/"
+node ./dist/index.js ./tests/petstore.yaml  --list-paths  --grep "/pet/"
 
 get:/pet/{petId}
 get:/pet/findByTags
@@ -207,7 +205,7 @@ By default, the tool will validate the OAS specification before generating the A
 When selecting paths, the tool will display a list of paths with a default page size of `10`. You can change this value using the `-p` (or `--page-size`) flag. For example, to display `40` rows per page, you can use the following command:
 
 ```shell
-node --no-warnings ./dist/index.js ./tests/petstore.yaml  --page-size 40
+node ./dist/index.js ./tests/petstore.yaml  --page-size 40
 ```
 
 ## Generating all paths without selection
