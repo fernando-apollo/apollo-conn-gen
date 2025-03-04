@@ -487,6 +487,17 @@ test('test_026_petstore-paths', async () => {
   await run(`petstore.yaml`, paths, 8, 6);
 });
 
+test('test_026_petstore-status-enum', async () => {
+  const paths = [
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls',
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status'
+  ];
+
+  await run(`petstore.yaml`, paths, 8, 1);
+});
+
 // run test
 async function run(
   file: string,

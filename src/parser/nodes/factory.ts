@@ -57,13 +57,18 @@ export default class Factory {
     }
     // array case
     else if (schema.type === 'object') {
-      if (!schema.properties)
-        warn(null, "[factory]", "Object has no properties: " + JSON.stringify(schema, null, 2) + " in: " + parent.pathToRoot())
-      result = new Obj(parent, (schema as any).name || null, schema);
+      if (schema.allOf || schema.oneOf) {
+        result = new Composed(parent, (schema as any).name || parent.name, schema);
+      }
+      else {
+        if (!schema.properties)
+          warn(null, "[factory]", "Object has no properties: " + JSON.stringify(schema, null, 2) + " in: " + parent.pathToRoot())
+
+        result = new Obj(parent, (schema as any).name || null, schema);
+      }
     }
     // Composed schema case.
     else if (schema.allOf || schema.oneOf) {
-      const _composedSchema = schema as SchemaObject;
       result = new Composed(parent, (schema as any).name || parent.name, schema);
     }
     // scalar
