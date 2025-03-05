@@ -202,6 +202,68 @@ When selecting paths, the tool will display a list of paths with a default page 
 node ./dist/cli.js ./tests/petstore.yaml  --page-size 40
 ```
 
-## Generating all paths without selection
+## Generating paths from a file
+
+When a connector is generated, the tool will also output the list of selected fields (as paths). This list can be used to generate a connector from a file without the need to select the fields again. 
+
+To do so, save the output to a file in `JSON` format and run the tool with the `-s` (or `--load-selections`) flag and the path to the file. Here's an example selection file: `tests/sample-petstore-selection.json`:
+```json
+[
+  "get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id",
+  "get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name",
+  "get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls",
+  "get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status"
+]
+```
+Running the following command:
+
+```shell
+  node ./dist/cli.js -s tests/sample-petstore-selection.json tests/petstore.yaml
+```
+
+will output the following:
+
+```graphql
+--------------- Apollo Connector schema -----------------
+extend schema
+  @link(url: "https://specs.apollo.dev/federation/v2.10", import: ["@key"])
+  @link(
+    url: "https://specs.apollo.dev/connect/v0.1"
+    import: ["@connect", "@source"]
+  )
+  @source(name: "api", http: { baseURL: "https://petstore3.swagger.io/v3" })
+
+
+scalar JSON
+
+type Pet {
+  id: Int
+  name: String
+  photoUrls: [String]
+  "pet status in the store"
+  status: String
+}
+
+type Query {
+  """
+  Find pet by ID (/pet/{petId})
+  """
+  petByPetId(petId: Int!): Pet
+    @connect(
+      source: "api"
+      http: { GET: "/pet/{$args.petId}"
+ }
+      selection: """
+      id
+      name
+      photoUrls
+      status
+      """
+    )
+}
+```
+
+
+## Generating all paths
 
 Whilst this option is not recommended for large specifications, you can generate all paths without prompting for a specific selection. To do so, you can use the `-n` (or `--skip-selection`) flag. This may result in a very large Apollo Connector schema, might take a long time to process and not be particularly useful, so use with caution.
