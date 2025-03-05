@@ -2,11 +2,7 @@ import { Command } from 'commander';
 import Gen from './parser/gen';
 
 import Writer from './parser/io/writer';
-import Composed from './parser/nodes/comp';
-import Ref from './parser/nodes/ref';
-import { IType, Type } from './parser/nodes/type';
-import Union from './parser/nodes/union';
-import { typesPrompt } from './prompts/prompt';
+import { generateFromSelection, promptForSelection } from './cli';
 
 const originalConsole = {
   log: console.log,
@@ -19,42 +15,11 @@ async function main(sourceFile: string, opts: any): Promise<void> {
   const gen = await Gen.fromFile(sourceFile, opts);
   await gen.visit();
 
-  const types = Array.from(gen.paths!.values());
-
-  const expandType = (type?: IType) => {
-    if (!type) {
-      return types;
-    }
-
-    let result: IType[] = [];
-
-    if (type instanceof Composed || type instanceof Union) {
-      // make sure we gather all the props
-      (type as Composed | Union).consolidate([]);
-
-      result = Array.from(type.props.values());
-    } else {
-      // top level paths
-      result = gen.expand(type);
-
-      if (result.length === 1) {
-        // we are checking for a ref so we can go straight to where its pointing
-        const child = result[0];
-
-        if (!(child as Type).visited) {
-          child.visit(gen.context!);
-        }
-
-        if (child instanceof Ref) {
-          result = [child.refType!];
-        }
-      }
-    }
-
-    return result;
-  };
-
   let pathSet = Array.from(gen.paths.values());
+  if (opts.loadSelections) {
+    generateFromSelection(opts, gen);
+    return;
+  }
 
   if (opts.grep !== '*') {
     const regex = new RegExp(opts.grep, 'ig');
@@ -66,20 +31,15 @@ async function main(sourceFile: string, opts: any): Promise<void> {
     return;
   }
 
-  let paths: string[] = [];
+  let paths: string[];
   if (opts.skipSelection) {
     paths = pathSet.map((p) => p.path() + '>**');
   } else {
-    paths = await typesPrompt({
-      context: gen.context!,
-      expandFn: expandType,
-      message: 'Navigate spec and select the fields to use in the connector',
-      pageSize: parseInt(opts.pageSize, 10),
-      types: pathSet,
-    });
+    paths = await promptForSelection(gen, opts, pathSet);
   }
 
-  console.info('selected :=', paths);
+  console.info('selected :=', JSON.stringify(paths, null, 2));
+  console.info('--------------- Apollo Connector schema -----------------');
 
   const writer: Writer = new Writer(gen);
   writer.generate(paths);
@@ -95,6 +55,7 @@ program
   .option('-l --list-paths', 'Only list the paths that can be generated', false)
   .option('-g --grep <regex>', 'Filter the list of paths with the passed expression', '*')
   .option('-p --page-size <num>', 'Number of rows to display in selection mode', '10')
+  .option('-s --load-selections <file>', 'Load a JSON file with field selections (other options are ignored)')
   .parse(process.argv);
 
 const source = program.args[0];
