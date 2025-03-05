@@ -45,13 +45,14 @@ OAS files you'd like to add to our test suite, please share them.*
       source                source spec (yaml or json)
     
     Options:
-      -V, --version         output the version number
-      -i --skip-validation  Skip validation step (default: false)
-      -n --skip-selection   Generate all [filtered] paths without prompting for a selection (default: false)
-      -l --list-paths       Only list the paths that can be generated (default: false)
-      -g --grep <regex>     Filter the list of paths with the passed expression (default: "*")
-      -p --page-size <num>  Number of rows to display in selection mode (default: "10")
-      -h, --help            display help for command
+      -V, --version                output the version number
+      -i --skip-validation         Skip validation step (default: false)
+      -n --skip-selection          Generate all [filtered] paths without prompting for a selection (default: false)
+      -l --list-paths              Only list the paths that can be generated (default: false)
+      -g --grep <regex>            Filter the list of paths with the passed expression (default: "*")
+      -p --page-size <num>         Number of rows to display in selection mode (default: "10")
+      -s --load-selections <file>  Load a JSON file with field selections (other options are ignored)
+      -h, --help                   display help for command
     ```
 
 ## Usage
@@ -202,11 +203,16 @@ When selecting paths, the tool will display a list of paths with a default page 
 node ./dist/cli.js ./tests/petstore.yaml  --page-size 40
 ```
 
-## Generating paths from a file
+## Generating a connector from an existing selection set
 
-When a connector is generated, the tool will also output the list of selected fields (as paths). This list can be used to generate a connector from a file without the need to select the fields again. 
+When a connector is generated, the tool also outputs the list of selected fields as paths. This list can then be used to generate a connector from a file without the need to select the fields again.
 
-To do so, save the output to a file in `JSON` format and run the tool with the `-s` (or `--load-selections`) flag and the path to the file. Here's an example selection file: `tests/sample-petstore-selection.json`:
+To do so, save the output to a file in `JSON` format and run the tool with the `-s` (or `--load-selections`) flag and the path to the file.
+
+### Example
+
+File: `tests/sample-petstore-selection.json`:
+
 ```json
 [
   "get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id",
@@ -215,6 +221,7 @@ To do so, save the output to a file in `JSON` format and run the tool with the `
   "get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status"
 ]
 ```
+
 Running the following command:
 
 ```shell
@@ -262,7 +269,6 @@ type Query {
     )
 }
 ```
-
 
 ## Generating all paths
 
