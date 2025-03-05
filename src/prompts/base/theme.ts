@@ -1,8 +1,8 @@
-import figures from '@inquirer/figures'
-import {CustomTheme, RenderContext} from "../theme";
-import {Status} from "@inquirer/core";
-import {IType} from "../../parser/nodes/type";
-import PropScalar from "../../parser/nodes/props/prop_scalar";
+import { Status } from '@inquirer/core';
+import figures from '@inquirer/figures';
+import PropScalar from '../../parser/nodes/props/prop_scalar';
+import { IType } from '../../parser/nodes/type';
+import { CustomTheme, RenderContext } from '../theme';
 
 // const theme: CustomTheme = {
 //   prefix: {

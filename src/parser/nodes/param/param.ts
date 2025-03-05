@@ -1,28 +1,30 @@
-import { SchemaObject, ParameterObject } from 'oas/dist/types';
+import { ParameterObject, SchemaObject } from 'oas/dist/types';
+import { trace } from '../../../log/trace';
+import { RenderContext } from '../../../prompts/theme';
+import Context from '../../context';
 import Writer from '../../io/writer';
 import Naming from '../../utils/naming';
-import {IType, Type} from "../type";
-import Context from "../../context";
-import {trace} from "../../../log/trace";
-import Factory from "../factory";
-import {RenderContext} from "../../../prompts/theme";
+import Factory from '../factory';
+import { IType, Type } from '../type';
 
 export default class Param extends Type {
   public resultType!: IType;
 
   constructor(
-      parent: IType,
-      name: string,
-      public schema: SchemaObject,
-      public required: boolean,
-      public defaultValue: any,
-      public parameter: ParameterObject
+    parent: IType,
+    name: string,
+    public schema: SchemaObject,
+    public required: boolean,
+    public defaultValue: unknown,
+    public parameter: ParameterObject,
   ) {
     super(parent, name);
   }
 
   public visit(context: Context): void {
-    if (this.visited) return;
+    if (this.visited) {
+      return;
+    }
 
     context.enter(this);
     trace(context, '-> [param:visit]', 'in: ' + this.name);
@@ -56,6 +58,14 @@ export default class Param extends Type {
     context.leave(this);
   }
 
+  public forPrompt(context: Context): string {
+    return `Param{ name=${this.name}, required=${this.required}, defaultValue=${this.defaultValue}, props=${this.props}, resultType=${this.resultType} }`;
+  }
+
+  public select(context: Context, writer: Writer, selection: string[]) {
+    // do nothing
+  }
+
   private writeDefaultValue(writer: Writer): void {
     writer.write(' = ');
     const value = this.defaultValue;
@@ -67,13 +77,5 @@ export default class Param extends Type {
       writer.write(String(value));
       writer.write('"');
     }
-  }
-
-  public forPrompt(context: Context): string {
-    return `Param{ name=${this.name}, required=${this.required}, defaultValue=${this.defaultValue}, props=${this.props}, resultType=${this.resultType} }`;
-  }
-
-  select(context: Context, writer: Writer, selection: string[]) {
-    // do nothing
   }
 }

@@ -1,15 +1,16 @@
-
-
 import _ from 'lodash';
-import {IType, Type} from "./type";
-import Context from "../context";
-import {trace} from "../../log/trace";
-import Writer from "../io/writer";
-import {RenderContext} from "../../prompts/theme";
-import Naming from "../utils/naming";
+import { trace } from '../../log/trace';
+import { RenderContext } from '../../prompts/theme';
+import Context from '../context';
+import Writer from '../io/writer';
+import Naming from '../utils/naming';
+import { IType, Type } from './type';
 
 export default class CircularRef extends Type {
-  constructor(parent: IType, public ref: IType) {
+  constructor(
+    parent: IType,
+    public ref: IType,
+  ) {
     super(parent, ref.name);
     // this.children = parent.children;
   }
@@ -19,12 +20,12 @@ export default class CircularRef extends Type {
     // return this.child.id;
   }
 
-  forPrompt(_context: Context): string {
+  public forPrompt(_: Context): string {
     return `${Naming.getRefName(this.ref.name)} (Circular Ref in: ${this.parent?.id})`;
   }
 
   public add(child: IType): void {
-    throw new Error("Should not be adding a child to a circular ref");
+    throw new Error('Should not be adding a child to a circular ref');
   }
 
   public visit(context: Context): void {
@@ -36,8 +37,7 @@ export default class CircularRef extends Type {
   public generate(context: Context, writer: Writer): void {
     trace(context, '-> [circular-ref:generate]', `-> in: ${this.name}`);
     // Do nothing, we can't really generate a circular reference.
-    trace(context, '<- [circular-ref:generate]', `-> out: ${this.name}`
-    );
+    trace(context, '<- [circular-ref:generate]', `-> out: ${this.name}`);
   }
 
   public select(context: Context, writer: Writer): void {
@@ -46,7 +46,7 @@ export default class CircularRef extends Type {
     writer
       .append(' '.repeat(context.indent + context.stack.length))
       .append(
-        `# Circular reference to '${this.name}' detected! Please re-visit the schema and remove the reference.\n`
+        `# Circular reference to '${this.name}' detected! Please re-visit the schema and remove the reference.\n`,
       );
 
     trace(context, '<- [circular-ref:select]', `-> out: ${this.name}`);

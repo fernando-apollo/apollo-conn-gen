@@ -1,18 +1,23 @@
 import Prop from './prop';
 
+import { SchemaObject } from 'oas/dist/types';
+import { trace } from '../../../log/trace';
+import { RenderContext } from '../../../prompts/theme';
 import Context from '../../context';
-import {IType} from '../type';
-import {SchemaObject} from 'oas/dist/types';
-import Factory from "../factory";
-import Writer from "../../io/writer";
-import {trace} from "../../../log/trace";
-import Naming from "../../utils/naming";
-import {RenderContext} from "../../../prompts/theme";
+import Writer from '../../io/writer';
+import Naming from '../../utils/naming';
+import Factory from '../factory';
+import { IType } from '../type';
 
 export default class PropScalar extends Prop {
   private propType?: IType;
 
-  constructor(parent: IType, name: string, public type: string, public schema: SchemaObject) {
+  constructor(
+    parent: IType,
+    name: string,
+    public type: string,
+    public schema: SchemaObject,
+  ) {
     super(parent, name, schema);
   }
 
@@ -21,7 +26,9 @@ export default class PropScalar extends Prop {
   }
 
   public visit(context: Context): void {
-    if (this.visited) return;
+    if (this.visited) {
+      return;
+    }
 
     context.enter(this);
     if (!this.propType) {
@@ -32,15 +39,15 @@ export default class PropScalar extends Prop {
     context.leave(this);
   }
 
-  getValue(context: Context): string {
+  public getValue(context: Context): string {
     return this.type;
   }
 
-  forPrompt(context: Context): string {
+  public forPrompt(context: Context): string {
     return `${this.name}: ${this.type}`;
   }
 
-  select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '   [prop:select]', this.name);
     const sanitised = Naming.sanitiseFieldForSelect(this.name);
     writer
@@ -52,5 +59,4 @@ export default class PropScalar extends Prop {
       child.select(context, writer, selection);
     }
   }
-
 }

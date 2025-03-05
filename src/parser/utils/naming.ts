@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import {Operation} from 'oas/dist/operation';
+import { Operation } from 'oas/dist/operation';
 
 interface Converter {
   convert(input: string): string;
@@ -36,7 +36,7 @@ class CapitalisePartsConverter extends AbstractConverter {
   }
 
   public process(input: string): string {
-    return Naming.capitaliseParts(input, /[\-_\.]/);
+    return Naming.capitaliseParts(input, /[-_.]/);
   }
 
   // private capitaliseParts(cleanedPath: string, splitRegex: RegExp): string {
@@ -93,19 +93,6 @@ class FinalConverter extends AbstractConverter {
 }
 
 export default class Naming {
-  private static readonly PARAM_CONVERTER: Converter =
-    new ReplaceBracketsConverter(
-      new CapitalisePartsConverter(new FinalFirstLowerCaseConverter())
-    );
-
-  private static readonly TYPE_CONVERTER: Converter = new RemoveRefConverter(
-    new CapitalisePartsConverter(new FinalFirstUpperCaseConverter())
-  );
-
-  private static readonly REF_CONVERTER: Converter = new RemoveRefConverter(
-    new FinalConverter()
-  );
-
   public static genParamName(param: string): string {
     return Naming.PARAM_CONVERTER.convert(param);
   }
@@ -125,7 +112,7 @@ export default class Naming {
     if (sanitised === name) {
       return sanitised;
     } else {
-      const needsQuotes = /[:_\-\.]/.test(fieldName) || name.startsWith('@');
+      const needsQuotes = /[:_\-.]/.test(fieldName) || name.startsWith('@');
       let builder = sanitised + ': ';
       if (needsQuotes) {
         builder += '"';
@@ -136,12 +123,6 @@ export default class Naming {
       }
       return builder;
     }
-  }
-
-  formatPath(path: string, parameters: string[]): string {
-    // Replace with your actual formatting logic.
-    // This example simply concatenates the parameters to the path.
-    return path + parameters.join('');
   }
 
   public static genOperationName(path: string, operation: Operation): string {
@@ -169,19 +150,21 @@ export default class Naming {
   }
 
   // internal stuff
-  static formatPath(path: string, parameters: string[]): string {
-    if (!path) return path;
+  public static formatPath(path: string, parameters: string[]): string {
+    if (!path) {
+      return path;
+    }
 
     // Step 1: Remove parameters enclosed in {}.
     const paramsJoined = parameters.join('');
     let cleanedPath = path.replace(/\{[^}]*\}/g, paramsJoined);
-    cleanedPath = Naming.capitaliseParts(cleanedPath, /[:\-\.\+]+/); // using regex similar to "[:\-\.]+"
+    cleanedPath = Naming.capitaliseParts(cleanedPath, /[:\-.+]+/); // using regex similar to "[:\-\.]+"
 
     // Step 2: Split the path by "/" and capitalize each part.
     return Naming.capitaliseParts(cleanedPath, '/');
   }
 
-  static capitaliseParts(input: string, splitPattern: RegExp | string): string {
+  public static capitaliseParts(input: string, splitPattern: RegExp | string): string {
     // If splitPattern is a string, convert it to a RegExp.
     const regex = typeof splitPattern === 'string' ? new RegExp(splitPattern, 'g') : splitPattern;
 
@@ -190,5 +173,20 @@ export default class Naming {
       .split(regex)
       .map((part) => (part ? _.upperFirst(part) : ''))
       .join('');
+  }
+  private static readonly PARAM_CONVERTER: Converter = new ReplaceBracketsConverter(
+    new CapitalisePartsConverter(new FinalFirstLowerCaseConverter()),
+  );
+
+  private static readonly TYPE_CONVERTER: Converter = new RemoveRefConverter(
+    new CapitalisePartsConverter(new FinalFirstUpperCaseConverter()),
+  );
+
+  private static readonly REF_CONVERTER: Converter = new RemoveRefConverter(new FinalConverter());
+
+  public formatPath(path: string, parameters: string[]): string {
+    // Replace with your actual formatting logic.
+    // This example simply concatenates the parameters to the path.
+    return path + parameters.join('');
   }
 }

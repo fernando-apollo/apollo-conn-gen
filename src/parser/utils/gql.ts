@@ -14,9 +14,7 @@ export default class GqlUtils {
       case 'boolean':
         return 'Boolean';
       default:
-        throw new Error(
-          `[getGQLScalarType] Cannot generate type = ${JSON.stringify(schema)}`
-        );
+        throw new Error(`[getGQLScalarType] Cannot generate type = ${JSON.stringify(schema)}`);
     }
   }
 

@@ -1,21 +1,16 @@
-import Context from '../context';
-import { IType, Type } from './type';
 import { SchemaObject } from 'oas/dist/types';
-import Factory from "./factory";
-import {trace} from "../../log/trace";
-import Writer from "../io/writer";
-import {RenderContext} from "../../prompts/theme";
+import { trace } from '../../log/trace';
+import { RenderContext } from '../../prompts/theme';
+import Context from '../context';
+import Writer from '../io/writer';
+import Factory from './factory';
+import { IType, Type } from './type';
 
 export default class Response extends Type {
   public schema: SchemaObject;
   public response?: IType;
 
-  constructor(
-    parent: IType,
-    name: string,
-    schema: SchemaObject,
-    response?: IType
-  ) {
+  constructor(parent: IType, name: string, schema: SchemaObject, response?: IType) {
     super(parent, name);
     this.schema = schema;
     this.response = response;
@@ -25,7 +20,7 @@ export default class Response extends Type {
     return 'res:' + this.name;
   }
 
-  visit(context: Context): void {
+  public visit(context: Context): void {
     if (this.visited) {
       trace(context, '-> [res:visit]', this.name + ' already visited.');
       return;
@@ -42,8 +37,8 @@ export default class Response extends Type {
     context.leave(this);
   }
 
-  forPrompt(context: Context): string {
-    return "Response";
+  public forPrompt(context: Context): string {
+    return 'Response';
   }
 
   public generate(context: Context, writer: Writer, selection: string[]): void {

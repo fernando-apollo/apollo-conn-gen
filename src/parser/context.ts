@@ -1,19 +1,22 @@
-import {IType} from './nodes/type';
-import {trace} from '../log/trace';
 import Oas from 'oas';
-import {ParameterObject, ResponseObject, SchemaObject} from 'oas/dist/types';
-import {ReferenceObject} from './nodes/props/types';
+import { ParameterObject, ResponseObject, SchemaObject } from 'oas/dist/types';
+import { trace } from '../log/trace';
+import { ReferenceObject } from './nodes/props/types';
+import { IType } from './nodes/type';
 import Naming from './utils/naming';
 
 export default class Context {
   public static readonly COMPONENTS_SCHEMAS: string = '#/components/schemas/';
   public static readonly COMPONENTS_RESPONSES: string = '#/components/responses/';
   public static readonly PARAMETER_SCHEMAS: string = '#/components/parameters/';
-
-  private parser: Oas;
   // private prompt: Prompt;
   public generatedSet: Set<string> = new Set();
   public indent: number;
+
+  public stack: IType[] = new Array<IType>();
+  public types: Map<string, IType> = new Map();
+
+  private parser: Oas;
 
   constructor(parser: Oas) {
     this.parser = parser;
@@ -21,24 +24,21 @@ export default class Context {
     this.indent = 0;
   }
 
-  public stack: Array<IType> = new Array<IType>();
-  public types: Map<string, IType> = new Map();
-
-  enter(type: IType): void {
+  public enter(type: IType): void {
     this.stack.push(type);
     trace(this, '-> [context::enter]', type.id);
   }
 
-  leave(type: IType): void {
+  public leave(type: IType): void {
     this.stack.pop();
     trace(this, '<- [context::leave]', type.id);
   }
 
-  size() {
+  public size() {
     return this.stack.length;
   }
 
-  store(name: string, type: IType): void {
+  public store(name: string, type: IType): void {
     trace(this, '[context::store]', 'store ' + type.id);
     this.types.set(name, type);
   }
@@ -72,17 +72,18 @@ export default class Context {
 
       // get the parameter schema
       const name = Naming.getRefName(ref)!;
-      return parameters[name] as ParameterObject ?? false;
+      return (parameters[name] as ParameterObject) ?? false;
     }
 
     return false;
   }
 
-  inContextOf(type: string, node: IType): boolean {
+  public inContextOf(type: string, node: IType): boolean {
     // console
     for (let i = this.stack.length - 1; i >= 0; i--) {
-      if (this.stack[i] === node)
+      if (this.stack[i] === node) {
         continue;
+      }
 
       if (this.stack[i].constructor.name === type) {
         return true;

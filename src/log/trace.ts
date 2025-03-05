@@ -1,4 +1,4 @@
-import Context from "../parser/context";
+import Context from '../parser/context';
 
 export function trace(ctx: Context | null, loc: string, log: string) {
   console.log(' '.repeat(ctx?.size() ?? 0), loc, log);

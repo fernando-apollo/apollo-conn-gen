@@ -1,36 +1,43 @@
-import {IType, Type} from "./type";
-import Context from "../context";
-import {SchemaObject} from 'oas/dist/types';
-import {trace} from "../../log/trace";
-import Prop from "./props/prop";
-import Factory from "./factory";
-import Writer from "../io/writer";
-import Naming from "../utils/naming";
-import Ref from "./ref";
-import _ from "lodash";
+import _ from 'lodash';
+import { SchemaObject } from 'oas/dist/types';
+import { trace } from '../../log/trace';
+import Context from '../context';
+import Writer from '../io/writer';
+import Naming from '../utils/naming';
+import Factory from './factory';
+import Prop from './props/prop';
+import Ref from './ref';
+import { IType, Type } from './type';
+import { ReferenceObject } from './props/types';
 
 export default class Composed extends Type {
-  constructor(parent: IType | undefined, public name: string, public schema: SchemaObject, public consolidated: boolean = false) {
-    super(parent, name);
-  }
-
   get id(): string {
     return `comp:${this.name}`;
   }
-
-  forPrompt(_context: Context): string {
-    return `${Naming.getRefName(this.name)} (Comp)`;;
+  constructor(
+    parent: IType | undefined,
+    public name: string,
+    public schema: SchemaObject,
+    public consolidated: boolean = false,
+  ) {
+    super(parent, name);
   }
 
-  visit(context: Context): void {
-    if (this.visited) return;
+  public forPrompt(_context: Context): string {
+    return `${Naming.getRefName(this.name)} (Comp)`;
+  }
+
+  public visit(context: Context): void {
+    if (this.visited) {
+      return;
+    }
 
     context.enter(this);
     trace(context, '-> [composed:visit]', 'in: ' + (this.name == null ? '[object]' : this.name));
 
     // If not in the context of a Composed or Param, log the composed schema.
-    if (!context.inContextOf("Composed", this) && !context.inContextOf("Param", this)) {
-      trace(context, "[comp]", 'In composed schema: ' + this.name);
+    if (!context.inContextOf('Composed', this) && !context.inContextOf('Param', this)) {
+      trace(context, '[comp]', 'In composed schema: ' + this.name);
     }
 
     const composedSchema = this.schema;
@@ -52,7 +59,7 @@ export default class Composed extends Type {
     context.leave(this);
   }
 
-  generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: Context, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [comp::generate]', `-> in: ${this.name}`);
 
@@ -82,9 +89,11 @@ export default class Composed extends Type {
     context.leave(this);
   }
 
-  select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '-> [comp::select]', `-> in: ${this.name}`);
-    if (!this.consolidated) this.consolidate(selection)
+    if (!this.consolidated) {
+      this.consolidate(selection);
+    }
 
     const composedSchema = this.schema;
     if (composedSchema.allOf != null) {
@@ -93,8 +102,7 @@ export default class Composed extends Type {
       for (const prop of selected) {
         prop.select(context, writer, selection);
       }
-    }
-    else if (composedSchema.oneOf != null) {
+    } else if (composedSchema.oneOf != null) {
       if (this.children.length === 1) {
         this.children[0].select(context, writer, selection);
       } else {
@@ -105,9 +113,47 @@ export default class Composed extends Type {
     trace(context, '<- [comp::select]', `-> out: ${this.name}`);
   }
 
+  public consolidate(selection: string[]): Set<string> {
+    const ids: Set<string> = new Set();
+    let props: Map<string, Prop> = new Map();
+
+    const queue: IType[] = Array.from(this.children.values()).filter((child) => !(child instanceof Prop));
+
+    while (queue.length > 0) {
+      const node = queue.shift()!;
+
+      ids.add(node instanceof Ref ? (node as Ref).refType!.id : node.id);
+
+      if (selection.length > 0) {
+        node.props.forEach((prop) => {
+          if (selection.find((s) => s.startsWith(prop.path()))) {
+            props.set(prop.name, prop);
+          }
+        });
+      } else {
+        node.props.forEach((prop) => props.set(prop.name, prop));
+      }
+
+      // sort props
+      props = new Map([...props.entries()].sort());
+
+      const children = Array.from(node.children.values()).filter((child) => !(child instanceof Prop));
+
+      queue.push(...children);
+    }
+
+    // copy all collected props from children into this node
+    props.forEach((prop) => this.props.set(prop.name, prop));
+
+    this.consolidated = true;
+
+    // and return the types.ts we've used
+    return ids;
+  }
+
   private visitAllOfNode(context: Context, schema: SchemaObject): void {
     const allOfs = schema.allOf || [];
-    const refs = allOfs.map((s) => (s as any).$ref);
+    const refs = allOfs.map((s) => (s as ReferenceObject).$ref);
 
     trace(context, '-> [composed::all-of]', `in: '${this.name}' of: ${allOfs.length} - refs: ${refs}`);
 
@@ -144,48 +190,5 @@ export default class Composed extends Type {
     }
 
     trace(context, '<- [composed::one-of]', `out: OneOf ${this.name} with size: ${oneOfs.length}`);
-  }
-
-  public consolidate(selection: string[]): Set<string> {
-    const ids: Set<string> = new Set()
-    let props: Map<string, Prop> = new Map()
-
-    const queue: IType[] = Array.from(this.children.values())
-      .filter(child => !(child instanceof Prop));
-
-    while (queue.length > 0) {
-      const node = queue.shift()!
-
-      ids.add((node instanceof Ref)
-          ? (node as any).refType!.id
-          : node.id
-      )
-
-      if (selection.length > 0) {
-        node.props.forEach((prop) => {
-          if (selection.find(s => s.startsWith(prop.path())))
-            props.set(prop.name, prop);
-        })
-      }
-      else {
-        node.props.forEach((prop) => props.set(prop.name, prop));
-      }
-
-      // sort props
-      props = new Map([...props.entries()].sort());
-
-      const children = Array.from(node.children.values())
-        .filter(child => !(child instanceof Prop))
-
-      queue.push(...children);
-    }
-
-    // copy all collected props from children into this node
-    props.forEach((prop) => this.props.set(prop.name, prop));
-
-    this.consolidated = true
-
-    // and return the types.ts we've used
-    return ids
   }
 }

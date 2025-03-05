@@ -1,23 +1,27 @@
+import { SchemaObject } from 'oas/dist/types';
+import { trace } from '../../log/trace';
 import Context from '../context';
-import {trace} from '../../log/trace';
-import {IType, Type} from './type';
-import {SchemaObject} from 'oas/dist/types';
-import Factory from "./factory";
-import Writer from "../io/writer";
-import Naming from "../utils/naming";
-import Ref from "./ref";
-import Arr from "./arr";
-import PropArray from "./props/prop_array";
-import Get from "./get";
-import Response from "./response"
+import Writer from '../io/writer';
+import Naming from '../utils/naming';
+import Arr from './arr';
+import Factory from './factory';
+import Get from './get';
+import PropArray from './props/prop_array';
+import Ref from './ref';
+import Response from './response';
+import { IType, Type } from './type';
 
 export default class Obj extends Type {
-  constructor(parent: IType | undefined, name: string, public schema: SchemaObject) {
+  constructor(
+    parent: IType | undefined,
+    name: string,
+    public schema: SchemaObject,
+  ) {
     super(parent, name);
     this.updateName();
   }
 
-  forPrompt(context: Context): string {
+  public forPrompt(context: Context): string {
     return `${Naming.getRefName(this.name)} (Obj)`;
   }
 
@@ -26,13 +30,15 @@ export default class Obj extends Type {
   }
 
   public visit(context: Context): void {
-    if (this.visited) return;
+    if (this.visited) {
+      return;
+    }
 
     context.enter(this);
     trace(context, '-> [obj:visit]', 'in ' + this.name);
 
-    if (!context.inContextOf("Composed", this)) {
-      trace(context, "[obj]", 'In object: ' + (this.name ? this.name : this.parent?.name));
+    if (!context.inContextOf('Composed', this)) {
+      trace(context, '[obj]', 'In object: ' + (this.name ? this.name : this.parent?.name));
     }
 
     this.visitProperties(context);
@@ -46,12 +52,12 @@ export default class Obj extends Type {
     context.leave(this);
   }
 
-  generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: Context, writer: Writer, selection: string[]): void {
     if (this.props.size === 0) {
       return;
     }
 
-    if (context.inContextOf("Response", this)) {
+    if (context.inContextOf('Response', this)) {
       writer.append(Naming.genTypeName(this.name));
       return;
     }
@@ -79,7 +85,7 @@ export default class Obj extends Type {
     context.leave(this);
   }
 
-  select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '-> [obj::select]', `-> in: ${this.name}`);
 
     const selected = this.selectedProps(selection);
@@ -125,7 +131,9 @@ export default class Obj extends Type {
   }
 
   private visitProperties(context: Context): void {
-    if (!this.schema.properties) return;
+    if (!this.schema.properties) {
+      return;
+    }
 
     const properties = this.schema.properties as Record<string, SchemaObject>;
     const propKeys = Object.keys(properties);
@@ -136,10 +144,7 @@ export default class Obj extends Type {
       return;
     }
 
-    const sorted = Object.entries(properties)
-      .sort((a, b) =>
-        a[0].toLowerCase().localeCompare(b[0].toLowerCase())
-      );
+    const sorted = Object.entries(properties).sort((a, b) => a[0].toLowerCase().localeCompare(b[0].toLowerCase()));
 
     for (const [key, schemaValue] of sorted) {
       const prop = Factory.fromProp(context, this, key, schemaValue);
@@ -204,5 +209,4 @@ export default class Obj extends Type {
     // this.addDependencies(context);
     trace(context, '<- [obj::props]', 'out props ' + this.props.size);
   }
-
 }

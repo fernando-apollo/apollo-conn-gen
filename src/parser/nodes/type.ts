@@ -1,8 +1,8 @@
-import Context from "../context";
-import Prop from "./props/prop";
-import Writer from "../io/writer";
-import {trace} from "../../log/trace";
-import Factory from "./factory";
+import { trace } from '../../log/trace';
+import Context from '../context';
+import Writer from '../io/writer';
+import Factory from './factory';
+import Prop from './props/prop';
 
 export interface IType {
   name: string;
@@ -28,7 +28,7 @@ export interface IType {
 
   expand(context: Context): IType[];
 
-  find(path: string, collection: Array<IType>): IType | boolean;
+  find(path: string, collection: IType[]): IType | boolean;
 
   select(context: Context, writer: Writer, selection: string[]): void;
 }
@@ -37,7 +37,7 @@ export abstract class Type implements IType {
   public parent?: IType;
   public name: string;
   public children: IType[];
-  circularRef?: IType;
+  public circularRef?: IType;
   public visited: boolean;
 
   private readonly _props: Map<string, Prop>;
@@ -50,26 +50,26 @@ export abstract class Type implements IType {
     this._props = new Map<string, Prop>();
   }
 
-  abstract visit(context: Context): void;
+  public abstract visit(context: Context): void;
 
-  abstract forPrompt(context: Context): string;
+  public abstract forPrompt(context: Context): string;
 
-  abstract select(context: Context, writer: Writer, selection: string[]): void;
+  public abstract select(context: Context, writer: Writer, selection: string[]): void;
 
-  find(path: string, collection: Array<IType>): IType | boolean {
-    const parts = path.split(">");
+  public find(path: string, collection: IType[]): IType | boolean {
+    const parts = path.split('>');
     let current: IType | undefined;
 
     let i = 0;
     do {
       const part = parts[i];
 
-      current = collection.find(t => t.id === part);
-      if (!current) return false;
+      current = collection.find((t) => t.id === part);
+      if (!current) {
+        return false;
+      }
 
-      collection = Array.from(current!.children.values())
-        || Array.from(current!.props.values())
-        || [];
+      collection = Array.from(current!.children.values()) || Array.from(current!.props.values()) || [];
       // console.log("found", current);
 
       i++;
@@ -78,7 +78,7 @@ export abstract class Type implements IType {
     return current || false;
   }
 
-  expand(context: Context): IType[] {
+  public expand(context: Context): IType[] {
     trace(context, '-> [expand]', `in: path: ${this.path()}`);
     if (!this.visited) {
       this.visit(context);
@@ -95,22 +95,17 @@ export abstract class Type implements IType {
     // }
   }
 
-  abstract generate(context: Context, writer: Writer, selection: string[]): void;
+  public abstract generate(context: Context, writer: Writer, selection: string[]): void;
 
-  get id() { return this.name; }
-  get props() { return this._props; }
+  get id() {
+    return this.name;
+  }
+  get props() {
+    return this._props;
+  }
 
-  ancestors(): IType[] {
-    const result: Array<IType> = [];
-    result.push(this);
-
-    let parent: IType | undefined = this;
-    while (parent.parent) {
-      parent = parent.parent;
-      result.unshift(parent);
-    }
-
-    return result;
+  public ancestors(): IType[] {
+    return this.parent ? [...this.parent.ancestors(), this] : [this];
   }
 
   public path(): string {
@@ -121,14 +116,13 @@ export abstract class Type implements IType {
       .replace(/#\/components\/schemas/g, '#/c/s');
   }
 
-  pathToRoot(): string {
+  public pathToRoot(): string {
     let builder = '';
-    let current: IType | undefined = this;
     let indent = 0;
 
-    while (current) {
-      builder += ' <- ' + ' '.repeat(indent++) + current.id + ' (' + current.constructor.name + ')\n';
-      current = current.parent;
+    const ancestors = this.ancestors();
+    for (let i = 0; i < ancestors.length; i++) {
+      builder += ' <- ' + ' '.repeat(indent++) + ancestors[i].id + ' (' + ancestors[i].constructor.name + ')\n';
     }
 
     return builder;
@@ -136,17 +130,17 @@ export abstract class Type implements IType {
 
   public add(child: IType): void {
     const paths: IType[] = this.ancestors();
-    const contains: boolean = paths.map(p => p.id).includes(child.id);
+    const contains: boolean = paths.map((p) => p.id).includes(child.id);
 
     if (contains) {
       trace(null, '-> [type:add]', 'already contains child: ' + child.id);
-      const ancestor: IType = paths[paths.map(p => p.id).indexOf(child.id)];
+      const ancestor: IType = paths[paths.map((p) => p.id).indexOf(child.id)];
       const wrapper = Factory.fromCircularRef(this, ancestor);
       this.children.push(wrapper);
-    }
-    else
+    } else {
       this.children.push(child);
-  };
+    }
+  }
 
   /*
     remove = (value: IType): void => {
@@ -169,7 +163,6 @@ export abstract class Type implements IType {
   }*/
 
   public selectedProps(selection: string[]) {
-    return Array.from(this.props.values())
-      .filter((prop) => selection.find(s => s.startsWith(prop.path())));
+    return Array.from(this.props.values()).filter((prop) => selection.find((s) => s.startsWith(prop.path())));
   }
 }

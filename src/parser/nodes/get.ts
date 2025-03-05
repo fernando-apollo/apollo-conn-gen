@@ -1,26 +1,23 @@
-import {
-  ResponseObject,
-  SchemaObject,
-  MediaTypeObject,
-  ParameterObject
-} from 'oas/dist/types';
-import {Operation} from "oas/dist/operation";
+import { Operation } from 'oas/dist/operation';
+import { MediaTypeObject, ParameterObject, ResponseObject, SchemaObject } from 'oas/dist/types';
 
+import { trace, warn } from '../../log/trace';
 import Context from '../context';
-import {IType, Type} from './type';
-import {trace, warn} from '../../log/trace';
-import {ReferenceObject} from './props/types';
-import Factory from './factory';
-import Naming from "../utils/naming";
 import Writer from '../io/writer';
-import Param from "./param/param";
-import {RenderContext} from "../../prompts/theme";
+import Naming from '../utils/naming';
+import Factory from './factory';
+import Param from './param/param';
+import { ReferenceObject } from './props/types';
+import { IType, Type } from './type';
 
 export default class Get extends Type {
   public resultType?: IType;
   public params: Param[] = [];
 
-  constructor(name: string, public operation: Operation) {
+  constructor(
+    name: string,
+    public operation: Operation,
+  ) {
     super(undefined, name);
   }
 
@@ -28,7 +25,7 @@ export default class Get extends Type {
     return `get:${this.name}`;
   }
 
-  visit(context: Context): void {
+  public visit(context: Context): void {
     if (this.visited) {
       trace(context, '-> [get:visit]', this.name + ' already visited.');
       return;
@@ -48,11 +45,11 @@ export default class Get extends Type {
     context.leave(this);
   }
 
-  forPrompt(context: Context): string {
+  public forPrompt(context: Context): string {
     return `[GET] ${this.name}`;
   }
 
-  generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: Context, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [get::generate]', `-> in: ${this.name}`);
 
@@ -83,7 +80,7 @@ export default class Get extends Type {
     context.leave(this);
   }
 
-  select(_context: Context, _writer: Writer, _selection: string[]) {
+  public select(_context: Context, _writer: Writer, _selection: string[]) {
     // do nothing
   }
 
@@ -100,8 +97,7 @@ export default class Get extends Type {
       this.params = parameters
         .filter((p) => !p.in || (p.in && (p.in as string).toLowerCase() !== 'header'))
         .map((p: ParameterObject) => this.visitParameter(context, this, p));
-    }
-    else {
+    } else {
       this.params = [];
     }
 
@@ -109,20 +105,18 @@ export default class Get extends Type {
   }
 
   private visitResponses = (context: Context) => {
-    let statusCodes = this.operation.getResponseStatusCodes();
+    const statusCodes = this.operation.getResponseStatusCodes();
 
-    if (!statusCodes.includes('200') && !statusCodes.includes("default")) {
+    if (!statusCodes.includes('200') && !statusCodes.includes('default')) {
       throw new Error('Could not find a valid 200 response');
     }
 
-    let responses = this.operation.schema.responses;
+    const responses = this.operation.schema.responses;
     if (responses!['200']) {
       this.visitResponse(context, '200', responses!['200'] as ResponseObject);
-    }
-    else if (responses!['default']) {
-      this.visitResponse(context, 'default', responses!['default'] as ResponseObject);
-    }
-    else {
+    } else if (responses!.default) {
+      this.visitResponse(context, 'default', responses!.default as ResponseObject);
+    } else {
       throw new Error("Could not find a '200' or 'default' response");
     }
   };
@@ -141,12 +135,10 @@ export default class Get extends Type {
       } else {
         this.visitResponseContent(context, code, json);
       }
-    }
-    else if (code === "default") {
+    } else if (code === 'default') {
       // there is no response for this operation
       // TODO: should we synthesize one?
-    }
-    else {
+    } else {
       throw new Error('Not yet implemented for: ' + JSON.stringify(response));
     }
   }
@@ -189,15 +181,18 @@ export default class Get extends Type {
   }
 
   private generateParameters(context: Context, writer: Writer, selection: string[]): void {
-    const sorted = this.params
-      .sort((a, b) => (b.required ? 1 : 0) - (a.required ? 1 : 0));
+    const sorted = this.params.sort((a, b) => (b.required ? 1 : 0) - (a.required ? 1 : 0));
 
-    if (sorted.length === 0) return;
+    if (sorted.length === 0) {
+      return;
+    }
 
     writer.append('(');
 
     sorted.forEach((parameter, index) => {
-      if (index > 0) writer.append(', ');
+      if (index > 0) {
+        writer.append(', ');
+      }
       parameter.generate(context, writer, selection);
     });
 

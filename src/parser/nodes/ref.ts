@@ -1,14 +1,14 @@
-import Context from '../context';
-import { IType, Type } from './type';
 import { SchemaObject } from 'oas/dist/types';
+import { trace } from '../../log/trace';
+import { RenderContext } from '../../prompts/theme';
+import Context from '../context';
+import Writer from '../io/writer';
+import Naming from '../utils/naming';
+import Arr from './arr';
+import Factory from './factory';
+import Prop from './props/prop';
 import { ReferenceObject } from './props/types';
-import {trace} from "../../log/trace";
-import Factory from "./factory";
-import Naming from "../utils/naming";
-import Writer from "../io/writer";
-import Arr from "./arr";
-import {RenderContext} from "../../prompts/theme";
-import Prop from "./props/prop";
+import { IType, Type } from './type';
 
 export default class Ref extends Type {
   public refType?: IType;
@@ -16,7 +16,7 @@ export default class Ref extends Type {
   constructor(
     parent: IType | undefined,
     name: string,
-    public schema: ReferenceObject | null
+    public schema: ReferenceObject | null,
   ) {
     super(parent, name);
   }
@@ -29,13 +29,15 @@ export default class Ref extends Type {
     return this.refType?.props ?? new Map();
   }
 
-  forPrompt(context: Context): string {
+  public forPrompt(context: Context): string {
     return `${Naming.getRefName(this.name)} (Ref)`;
   }
 
-  visit(context: Context): void {
+  public visit(context: Context): void {
     // console.log('schema', this.schema);
-    if (this.visited) return;
+    if (this.visited) {
+      return;
+    }
     const ref = this.schema?.$ref ?? '';
 
     context.enter(this);
@@ -62,10 +64,9 @@ export default class Ref extends Type {
 
     // If we're in a Response context and the resolved type is an Arr,
     // generate it with array notation.
-    if (context.inContextOf("Response", this) && this.refType instanceof Arr) {
+    if (context.inContextOf('Response', this) && this.refType instanceof Arr) {
       writer.append('[').append(this.firstChild().name).append(']');
-    }
-    else {
+    } else {
       // Rewrite terrible names to something more sensible.
       const sanitised = Naming.genTypeName(this.name);
       const refName = Naming.getRefName(this.name);
@@ -76,7 +77,7 @@ export default class Ref extends Type {
     context.leave(this);
   }
 
-  select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '-> [ref::select]', `-> in: ${this.name}`);
     if (this.refType) {
       this.refType.select(context, writer, selection);

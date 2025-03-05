@@ -1,15 +1,15 @@
 import Prop from './prop';
 
+import { trace } from '../../../log/trace';
+import { RenderContext } from '../../../prompts/theme';
 import Context from '../../context';
-import {trace} from '../../../log/trace';
-import PropRef from './prop_ref';
-import {IType} from '../type';
+import Writer from '../../io/writer';
+import Naming from '../../utils/naming';
+import Factory from '../factory';
+import { IType } from '../type';
 import PropObj from './prop_obj';
-import Writer from "../../io/writer";
-import Naming from "../../utils/naming";
-import Factory from "../factory";
-import PropScalar from "./prop_scalar";
-import {RenderContext} from "../../../prompts/theme";
+import PropRef from './prop_ref';
+import PropScalar from './prop_scalar';
 
 export default class PropArray extends Prop {
   public items?: Prop;
@@ -19,7 +19,9 @@ export default class PropArray extends Prop {
   }
 
   public override visit(context: Context): void {
-    if (this.visited) return;
+    if (this.visited) {
+      return;
+    }
 
     context.enter(this);
     trace(context, '-> [prop-array:visit]', 'in');
@@ -45,12 +47,12 @@ export default class PropArray extends Prop {
 
   public add(child: IType): void {
     const paths: IType[] = this.ancestors();
-    const contains: boolean = paths.map(p => p.id).includes(child.id);
+    const contains: boolean = paths.map((p) => p.id).includes(child.id);
 
     trace(null, '-> [prop-array:add]', 'contains child? ' + contains);
 
     if (contains) {
-      const ancestor: IType = paths[paths.map(p => p.id).indexOf(child.id)];
+      const ancestor: IType = paths[paths.map((p) => p.id).indexOf(child.id)];
       const wrapper: IType = Factory.fromCircularRef(this, ancestor);
       super.add(wrapper);
       this.visited = true;
@@ -59,18 +61,16 @@ export default class PropArray extends Prop {
     }
   }
 
-  forPrompt(context: Context): string {
+  public forPrompt(context: Context): string {
     return `${this.name}: [${this.items!.getValue(context)}]`;
   }
 
-  select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '-> [prop-array:select]', 'in: ' + this.name);
 
     const fieldName = this.name;
     const sanitised = Naming.sanitiseFieldForSelect(fieldName);
-    writer
-      .append(' '.repeat(context.indent + context.stack.length))
-      .append(sanitised);
+    writer.append(' '.repeat(context.indent + context.stack.length)).append(sanitised);
 
     if (this.needsBrackets(this.items!)) {
       writer.append(' {');
@@ -85,16 +85,14 @@ export default class PropArray extends Prop {
 
     if (this.needsBrackets(this.items!)) {
       context.leave(this);
-      writer
-        .append(' '.repeat(context.indent + context.stack.length))
-        .append('}');
+      writer.append(' '.repeat(context.indent + context.stack.length)).append('}');
     }
     writer.append('\n');
 
     trace(context, '<- [prop:array:select]', 'out');
   }
 
-  needsBrackets(child: IType): boolean {
+  public needsBrackets(child: IType): boolean {
     return child instanceof PropRef || child instanceof PropObj;
   }
 }

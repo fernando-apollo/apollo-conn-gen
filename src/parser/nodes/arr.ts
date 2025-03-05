@@ -1,18 +1,22 @@
+import { SchemaObject } from 'oas/dist/types';
+import { OpenAPIV3 } from 'openapi-types';
+import { trace } from '../../log/trace';
+import { RenderContext } from '../../prompts/theme';
 import Context from '../context';
-import ArraySchemaObject = OpenAPIV3.ArraySchemaObject;
-import {IType, Type} from './type';
-import {SchemaObject} from 'oas/dist/types';
-import {OpenAPIV3} from "openapi-types";
-import Factory from "./factory";
-import {trace} from "../../log/trace";
 import Writer from '../io/writer';
-import {RenderContext} from "../../prompts/theme";
-import Naming from "../utils/naming";
+import Naming from '../utils/naming';
+import Factory from './factory';
+import ArraySchemaObject = OpenAPIV3.ArraySchemaObject;
+import { IType, Type } from './type';
 
 export default class Arr extends Type {
   public itemsType?: IType;
 
-  constructor(parent: IType | undefined, name: string, public items: ArraySchemaObject) {
+  constructor(
+    parent: IType | undefined,
+    name: string,
+    public items: ArraySchemaObject,
+  ) {
     super(parent, name);
     this.itemsType = Factory.fromSchema(this, this.items);
   }
@@ -21,8 +25,10 @@ export default class Arr extends Type {
     return 'array:' + (this.itemsType ? this.itemsType.name : 'unknown-yet');
   }
 
-  visit(context: Context): void {
-    if (this.visited) return;
+  public visit(context: Context): void {
+    if (this.visited) {
+      return;
+    }
 
     context.enter(this);
     trace(context, '-> [array:visit]', 'in');
@@ -34,11 +40,11 @@ export default class Arr extends Type {
     context.leave(this);
   }
 
-  forPrompt(context: Context): string {
+  public forPrompt(context: Context): string {
     return `${Naming.getRefName(this.name)} (Array)`;
   }
 
-  generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: Context, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [array::generate]', `-> in: ${this.name}`);
 
@@ -52,7 +58,7 @@ export default class Arr extends Type {
     context.leave(this);
   }
 
-  select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '-> [array::select]', `-> in: ${this.name}`);
 
     if (this.itemsType) {

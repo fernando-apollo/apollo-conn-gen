@@ -1,10 +1,11 @@
+import { execSync, spawnSync } from 'child_process';
 import fs from 'fs';
+import * as assert from 'node:assert';
+import * as os from 'os';
+import * as path from 'path';
 import Gen from '../parser/gen';
 import Writer from '../parser/io/writer';
-import * as path from 'path';
-import * as os from 'os';
-import { execSync, spawnSync } from 'child_process';
-import * as assert from 'node:assert';
+import _ from 'lodash';
 
 const base =
   '/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/apollo-connector-gen/src/test/resources/';
@@ -35,9 +36,7 @@ test('test minimal petstore 02', async () => {
 });
 
 test('test minimal petstore 03 array', async () => {
-  const paths = [
-    'get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls',
-  ];
+  const paths = ['get:/pet/{petId}>res:r>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls'];
 
   await run(`petstore.yaml`, paths, 8, 1);
 });
@@ -45,7 +44,7 @@ test('test minimal petstore 03 array', async () => {
 test('test full petstore', async () => {
   expect(fs.existsSync(`${base}/petstore.yaml`)).toBeTruthy();
 
-  let file = fs.readFileSync(`${base}/petstore.yaml`);
+  const file = fs.readFileSync(`${base}/petstore.yaml`);
   expect(file).toBeDefined();
 
   const paths = [
@@ -242,7 +241,9 @@ test('test_013_testTMF637_TestSimpleRecursion no type found', async () => {
   } catch (error) {
     console.error(error);
     expect(error).toBeDefined();
-    expect((error as any).message).toContain('Could not find type');
+
+    const message = _.get(error, 'message') ?? '';
+    expect(message).toContain('Could not find type');
   }
 });
 
@@ -271,12 +272,7 @@ test('test_015_testTMF637_ProductStatusEnum', async () => {
   const paths = [
     'get:/product/{id}>res:r>ref:#/c/s/Product>comp:#/c/s/Product>obj:[anonymous:#/c/s/Product]>prop:ref:#status>enum:#/c/s/ProductStatusType',
   ];
-  const output = await run(
-    'TMF637-ProductInventory-v5.0.0.oas.yaml',
-    paths,
-    2,
-    6
-  );
+  const output = await run('TMF637-ProductInventory-v5.0.0.oas.yaml', paths, 2, 6);
 });
 
 test('test_016_testMostPopularProductScalarsOnly', async () => {
@@ -329,9 +325,7 @@ test('test_017_testMostPopularProduct', async () => {
 });
 
 test('test_017_testMostPopularProduct_star', async () => {
-  const paths = [
-    'get:/emailed/{period}.json>res:r>obj:emailedByPeriodJsonResponse>*',
-  ];
+  const paths = ['get:/emailed/{period}.json>res:r>obj:emailedByPeriodJsonResponse>*'];
 
   await run('most-popular-product.yaml', paths, 4, 1);
 });
@@ -492,7 +486,7 @@ test('test_026_petstore-status-enum', async () => {
     'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:id',
     'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:name',
     'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:array:#photoUrls',
-    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status'
+    'get:/pet/findByStatus>res:r>array:#/c/s/Pet>ref:#/c/s/Pet>obj:#/c/s/Pet>prop:scalar:status',
   ];
 
   await run(`petstore.yaml`, paths, 8, 1);
@@ -505,7 +499,7 @@ async function run(
   pathsSize: number,
   typesSize: number,
   shouldFail: boolean = false,
-  skipValidation: boolean = false
+  skipValidation: boolean = false,
 ): Promise<string | undefined> {
   const gen = await Gen.fromFile(`${base}/${file}`, { skipValidation });
   await gen.visit();
@@ -514,29 +508,21 @@ async function run(
   expect(gen.paths.size).toBe(pathsSize);
 
   const writer: Writer = new Writer(gen);
-
-  try {
-    writer.generate(paths);
-  } catch (err) {
-    throw err;
-  }
+  writer.generate(paths);
 
   expect(gen.context?.types.size).toBe(typesSize);
 
   const schema = writer.flush();
   expect(schema).toBeDefined();
 
-  const schemaFile = path.join(
-    os.tmpdir(),
-    file.replace(/yaml|json|yml/, 'graphql')
-  );
+  const schemaFile = path.join(os.tmpdir(), file.replace(/yaml|json|yml/, 'graphql'));
   fs.writeFileSync(schemaFile, schema, { encoding: 'utf-8', flag: 'w' });
 
   const [result, output] = compose(schemaFile);
   if (shouldFail) {
     expect(result).toBeFalsy();
     expect(output).toBeDefined();
-    return output;
+    return output as string | undefined;
   } else {
     expect(output).toBeUndefined();
     expect(result).toBeTruthy();
@@ -554,7 +540,7 @@ function isRoverAvailable(command: string): [boolean, string?] {
 function compose(schemaPath: string) {
   console.log('schemaPath', schemaPath);
 
-  let rover: [boolean, (string | undefined)?] = isRoverAvailable('rover');
+  const rover: [boolean, (string | undefined)?] = isRoverAvailable('rover');
   if (!rover[0]) {
     throw new Error('Rover is not available');
   }
@@ -576,7 +562,7 @@ subgraphs:
   try {
     output = execSync(cmd, { stdio: 'pipe' });
     return [true, undefined];
-  } catch (error: any) {
-    return [false, error?.message];
+  } catch (error) {
+    return [false, _.get(error, 'message')];
   }
 }

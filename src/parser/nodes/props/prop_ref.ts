@@ -1,51 +1,56 @@
 import Context from '../../context';
 import Prop from './prop';
 
-import {trace} from '../../../log/trace';
+import _ from 'lodash';
+import { SchemaObject } from 'oas/dist/types';
+import { trace } from '../../../log/trace';
+import { RenderContext } from '../../../prompts/theme';
+import Writer from '../../io/writer';
+import Naming from '../../utils/naming';
+import Arr from '../arr';
+import CircularRef from '../circular_ref';
+import Composed from '../comp';
 import Factory from '../factory';
-import {IType} from '../type';
-import {SchemaObject} from 'oas/dist/types';
-import Writer from "../../io/writer";
-import Naming from "../../utils/naming";
-import Arr from "../arr";
-import Obj from "../obj";
-import Composed from "../comp";
-import {RenderContext} from "../../../prompts/theme";
-import Union from "../union";
-import CircularRef from "../circular_ref";
-import _ from "lodash";
+import Obj from '../obj';
+import { IType } from '../type';
+import Union from '../union';
 
 export default class PropRef extends Prop {
-  refType?: IType;
-
-  constructor(parent: IType | undefined, name: string, public schema: SchemaObject, public ref: string) {
-    super(parent, name, schema);
-  }
-
   get id(): string {
     return `prop:ref:#${this.name}`;
+  }
+  public refType?: IType;
+
+  constructor(
+    parent: IType | undefined,
+    name: string,
+    public schema: SchemaObject,
+    public ref: string,
+  ) {
+    super(parent, name, schema);
   }
 
   public override add(child: IType): void {
     child.name = this.ref;
     const paths: IType[] = this.ancestors();
-    const contains: boolean = paths.map(p => p.id).includes(child.id);
+    const contains: boolean = paths.map((p) => p.id).includes(child.id);
 
     trace(null, '-> [prop-ref:add]', 'contains child? ' + contains);
     if (contains) {
-      const ancestor: IType = paths[paths.map(p => p.id).indexOf(child.id)];
+      const ancestor: IType = paths[paths.map((p) => p.id).indexOf(child.id)];
       const wrapper = Factory.fromCircularRef(this, ancestor);
       super.add(wrapper);
       this.visited = true;
       this.refType = wrapper;
-    }
-    else {
+    } else {
       super.add(child);
     }
   }
 
-  visit(context: Context): void {
-    if (this.visited) return;
+  public visit(context: Context): void {
+    if (this.visited) {
+      return;
+    }
     context.enter(this);
     trace(context, '-> [prop-ref:visit]', 'in ' + this.name + ', ref: ' + this.ref);
 
@@ -70,37 +75,21 @@ export default class PropRef extends Prop {
     context.leave(this);
   }
 
-  protected generateValue(context: Context, writer: Writer): void {
-    const type = this.refType;
-
-    if (type && (type as IType) instanceof Arr) {
-      writer.append('[');
-      const items = (type as Arr).itemsType;
-      writer.append(_.upperFirst(items!.name));
-      writer.append(']');
-    }
-    else {
-      writer.append(this.getValue(context));
-    }
-  }
-
   public getValue(_context: Context): string {
     const type = this.refType!;
     const name = type ? type.name : this.ref;
     return Naming.genTypeName(name!);
   }
 
-  forPrompt(context: Context): string {
+  public forPrompt(context: Context): string {
     return `${this.name}: ${Naming.getRefName(this.ref)} (Ref)`;
   }
 
-  select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: Context, writer: Writer, selection: string[]) {
     trace(context, '-> [prop-ref:select]', 'in ' + this.name + ', ref: ' + this.ref);
     const fieldName = this.name;
     const sanitised = Naming.sanitiseFieldForSelect(fieldName);
-    writer
-      .append(' '.repeat(context.indent + context.stack.length))
-      .append(sanitised);
+    writer.append(' '.repeat(context.indent + context.stack.length)).append(sanitised);
 
     if (this.refType && this.needsBrackets(this.refType)) {
       writer.append(' {').append('\n');
@@ -113,24 +102,30 @@ export default class PropRef extends Prop {
 
     if (this.refType && this.needsBrackets(this.refType)) {
       context.leave(this);
-      writer
-        .append(' '.repeat(context.indent + context.stack.length))
-        .append('}');
+      writer.append(' '.repeat(context.indent + context.stack.length)).append('}');
     }
 
     writer.append('\n');
     trace(context, '<- [prop-ref:select]', 'out ' + this.name + ', ref: ' + this.ref);
   }
 
+  protected generateValue(context: Context, writer: Writer): void {
+    const type = this.refType;
+
+    if (type && (type as IType) instanceof Arr) {
+      writer.append('[');
+      const items = (type as Arr).itemsType;
+      writer.append(_.upperFirst(items!.name));
+      writer.append(']');
+    } else {
+      writer.append(this.getValue(context));
+    }
+  }
+
   private needsBrackets(child: IType): boolean {
     if (child instanceof Arr) {
       return this.needsBrackets(child.itemsType!);
     }
-    return (
-      child instanceof Obj ||
-      child instanceof Union ||
-      child instanceof Composed ||
-      child instanceof CircularRef
-    );
+    return child instanceof Obj || child instanceof Union || child instanceof Composed || child instanceof CircularRef;
   }
 }
