@@ -15,6 +15,38 @@ interface IGenOptions {
 }
 
 export default class Gen {
+  public static async fromData(
+    data: ArrayBuffer,
+    options: IGenOptions = {
+      skipValidation: false,
+    },
+  ): Promise<Gen> {
+    const normalizer: OASNormalize = new OASNormalize(data, {
+      enablePaths: true,
+    });
+
+    const _loaded: Record<string, unknown> = await normalizer.load();
+    console.log('loaded file');
+
+    const _normalised: OpenAPI.Document = await normalizer.bundle();
+    console.log('loaded bundle');
+
+    if (!options.skipValidation) {
+      const validated: boolean = await normalizer.validate();
+      if (!validated) {
+        console.log('validated', validated);
+        throw new Error('Could not validate source file');
+      }
+    }
+
+    const json = await normalizer.convert();
+    console.log('converted');
+
+    const parser: Oas = new Oas(json as OASDocument);
+    // return new ConnectorGen(parser, prompt);
+    return new Gen(parser);
+  }
+
   public static async fromFile(
     sourceFile: string,
     options: IGenOptions = {
