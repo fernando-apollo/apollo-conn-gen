@@ -6,9 +6,8 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
-    "outDir": "dist",
-    "sourceMap": true,
-//    "noEmit": true
+    "outDir": "dist/cli",
+    "sourceMap": true
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
