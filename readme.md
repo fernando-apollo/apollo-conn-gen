@@ -32,13 +32,13 @@ OAS files you'd like to add to our test suite, please share them.*
 3. **Build the Project**:
 
    ```bash
-   npm run dist
+   npm run build
    ```
 
    And run the CLI with:
 
     ```shell
-    node ./dist/cli.js -h
+    node ./cli/index.js -h
     Usage: index [options] <source>
     
     Arguments:
@@ -60,7 +60,7 @@ OAS files you'd like to add to our test suite, please share them.*
 To generate an Apollo Connector from your OAS file, run:
 
 ```bash
-node ./dist/cli.js <path-to-your-oas-file>
+node ./cli/index.js <path-to-your-oas-file>
 ```
 
 Replace `<path-to-your-oas-file>` with the relative or absolute path to your OAS YAML or JSON file.
@@ -70,7 +70,7 @@ Replace `<path-to-your-oas-file>` with the relative or absolute path to your OAS
 *Note: the petstore spec can be downloaded from (<https://petstore3.swagger.io>)*
 
 ```bash
-node ./dist/cli.js ./tests/petstore.yaml
+node ./cli/index.js ./tests/petstore.yaml
 ```
 
 The output should be similar to the following:
@@ -153,7 +153,7 @@ type Query {
 For a complete list of options, run:
 
 ```bash
-node ./dist/cli.js -h
+node ./cli/index.js -h
 ```
 
 ### Filtering paths
@@ -161,7 +161,7 @@ node ./dist/cli.js -h
 The tool allows filtering the list of paths using a regular expression. This is useful when you have large specs and only want to generate (or list) a subset. As shown above, you can list all the paths using the `-l` flag:
 
 ```shell
-node ./dist/cli.js ./tests/petstore.yaml --list-paths
+node ./cli/index.js ./tests/petstore.yaml --list-paths
 
 get:/pet/{petId}
 get:/pet/findByStatus
@@ -176,7 +176,7 @@ get:/user/logout
 If you'd like to filter the paths using a regular expression, you can use the `-g` flag. For example, to only list the operations ending with an argument, you can use the following command:
 
 ```shell
-node ./dist/cli.js ./tests/petstore.yaml  --list-paths  --grep "{\\w+}$"
+node ./cli/index.js ./tests/petstore.yaml  --list-paths  --grep "{\\w+}$"
 
 get:/pet/{petId}
 get:/store/order/{orderId}
@@ -185,7 +185,7 @@ get:/store/order/{orderId}
 or, for instance, filtering by a specific path:
 
 ```shell
-node ./dist/cli.js ./tests/petstore.yaml  --list-paths  --grep "/pet/"
+node ./cli/index.js ./tests/petstore.yaml  --list-paths  --grep "/pet/"
 
 get:/pet/{petId}
 get:/pet/findByTags
@@ -200,7 +200,7 @@ By default, the tool will validate the OAS specification before generating the A
 When selecting paths, the tool will display a list of paths with a default page size of `10`. You can change this value using the `-p` (or `--page-size`) flag. For example, to display `40` rows per page, you can use the following command:
 
 ```shell
-node ./dist/cli.js ./tests/petstore.yaml  --page-size 40
+node ./cli/index.js ./tests/petstore.yaml  --page-size 40
 ```
 
 ## Generating a connector from an existing selection set
@@ -225,7 +225,7 @@ File: `tests/sample-petstore-selection.json`:
 Running the following command:
 
 ```shell
-  node ./dist/cli.js -s tests/sample-petstore-selection.json tests/petstore.yaml
+  node ./cli/index.js -s tests/sample-petstore-selection.json tests/petstore.yaml
 ```
 
 will output the following:
@@ -273,3 +273,18 @@ type Query {
 ## Generating all paths
 
 Whilst this option is not recommended for large specifications, you can generate all paths without prompting for a specific selection. To do so, you can use the `-n` (or `--skip-selection`) flag. This may result in a very large Apollo Connector schema, might take a long time to process and not be particularly useful, so use with caution.
+
+## Buildling the library
+
+The tool can be built as a library to use in other projects. To do this, simply run
+
+```shell
+npm run lib
+```
+
+Which will build everything under the `./dist` folder:
+
+```shell
+ls dist/
+index.d.ts       index.esm.js     index.esm.js.map index.js         index.js.map
+```
