@@ -95,6 +95,14 @@ export default class Gen {
     // this.prompt = prompt;
   }
 
+  public title(): string {
+    return this.parser.getDefinition().info.title;
+  }
+
+  public version(): string {
+    return this.parser.getDefinition().info.version;
+  }
+
   public async visit(): Promise<void> {
     const parser = this.parser;
     const context = this.getContext();

@@ -1,14 +1,15 @@
 import { execSync, spawnSync } from 'child_process';
-import fs from 'fs';
-import * as assert from 'node:assert';
 import * as os from 'os';
 import * as path from 'path';
 import Gen from '../parser/gen';
 import Writer from '../parser/io/writer';
+// @ts-ignore
 import _ from 'lodash';
+// @ts-ignore
+import fs from 'fs';
 
 const base =
-  '/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/apollo-connector-gen/src/test/resources/';
+  '/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/java-apollo-connector-gen/src/test/resources/';
 
 test('test minimal petstore', async () => {
   const paths = [
