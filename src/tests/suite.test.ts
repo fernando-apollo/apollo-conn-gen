@@ -3,9 +3,7 @@ import * as os from 'os';
 import * as path from 'path';
 import Gen from '../parser/gen';
 import Writer from '../parser/io/writer';
-// @ts-ignore
 import _ from 'lodash';
-// @ts-ignore
 import fs from 'fs';
 
 const base =
