@@ -9,6 +9,7 @@ import { trace } from '../log/trace';
 import Context from './context';
 import Factory from './nodes/factory';
 import { IType } from './nodes/type';
+import Writer from './io/writer';
 
 interface IGenOptions {
   skipValidation: boolean;
@@ -85,6 +86,7 @@ export default class Gen {
     // return new ConnectorGen(parser, prompt);
     return new Gen(parser);
   }
+
   public parser: Oas;
   // public prompt: Prompt;
   public context?: Context;
@@ -155,6 +157,38 @@ export default class Gen {
 
     return false;
   }
+
+  public findPath(path: string): IType | boolean {
+    let collection = Array.from(this.paths.values());
+    let current: IType | undefined;
+    let last: IType | undefined;
+
+    let i = 0;
+    const parts = path.split('>');
+    do {
+      const part = parts[i].replace(/#\/c\/s/g, '#/components/schemas');
+      current = collection.find((t) => t.id === part);
+      if (!current) {
+        throw new Error('Could not find type: ' + part + ' from ' + path + ', last: ' + last?.pathToRoot());
+      }
+
+      // make sure we expand it before we move on to the next part
+      this.expand(current);
+      last = current;
+
+      collection = Array.from(current!.children.values()) || Array.from(current!.props.values()) || [];
+
+      i++;
+    } while (i < parts.length);
+
+    return current;
+  }
+
+  public writer(): Writer {
+    return new Writer(this);
+  }
+
+  // private methods
 
   private visitGet(_context: Context, name: string, op: Operation): IType {
     // TODO

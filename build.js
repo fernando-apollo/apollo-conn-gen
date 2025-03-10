@@ -13,7 +13,7 @@ const sharedConfig = {
   minify: false,
   keepNames: true,
   external: Object.keys(dependencies)
-    .concat(['fs', 'path', 'util', '@readme/postman-to-openapi'])
+    .concat(['fs', 'path', 'util', 'http', '@readme/postman-to-openapi'])
     .concat(Object.keys(devDependencies)),
   sourcemap: true,
 };
