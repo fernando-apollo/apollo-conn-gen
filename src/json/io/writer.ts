@@ -44,7 +44,7 @@ export class ConnectorWriter {
     @connect(
       source: "api"
       http: { GET: "/test" }
-      selection: """`
+      selection: """`,
     );
 
     walker.writeSelection(writer);

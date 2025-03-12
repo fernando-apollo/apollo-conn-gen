@@ -11,7 +11,6 @@ import Factory from './nodes/factory';
 import { IType } from './nodes/type';
 import Writer from './io/writer';
 
-
 interface IGenOptions {
   skipValidation: boolean;
 }

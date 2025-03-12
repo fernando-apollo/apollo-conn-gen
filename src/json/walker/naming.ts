@@ -5,7 +5,7 @@
 function capitaliseParts(cleanedPath: string, splitChar: string): string {
   // Split the string using a regular expression based on splitChar.
   const parts = cleanedPath.split(new RegExp(splitChar));
-  let formattedPath = "";
+  let formattedPath = '';
   for (const part of parts) {
     if (part) {
       // Capitalize the first letter of each part
@@ -21,7 +21,7 @@ function uncapitalize(s: string): string {
 }
 
 export function genParamName(param: string): string {
-  return uncapitalize(capitaliseParts(param, "[\\-_\\.]"));
+  return uncapitalize(capitaliseParts(param, '[\\-_\\.]'));
 }
 
 // Private helper; not exported.
@@ -30,30 +30,30 @@ function formatPath(path: string, parameters: string[]): string {
     return path;
   }
   // Remove parameters enclosed in `{}`.
-  const cleanedPath = path.replace(/\{[^}]*\}/g, parameters.join(""));
+  const cleanedPath = path.replace(/\{[^}]*\}/g, parameters.join(''));
   // First, capitalize parts split by "[:\-\.]+".
-  const interim = capitaliseParts(cleanedPath, "[:\\-\\.]+");
+  const interim = capitaliseParts(cleanedPath, '[:\\-\\.]+');
   // Then, split by "/" and capitalize each part.
-  return capitaliseParts(interim, "/");
+  return capitaliseParts(interim, '/');
 }
 
 export function sanitiseField(name: string): string {
-  const fieldName = name.startsWith("@") ? name.substring(1) : name;
+  const fieldName = name.startsWith('@') ? name.substring(1) : name;
   return genParamName(fieldName);
 }
 
 export function sanitiseFieldForSelect(name: string): string {
-  const fieldName = name.startsWith("@") ? name.substring(1) : name;
+  const fieldName = name.startsWith('@') ? name.substring(1) : name;
   const sanitised = genParamName(fieldName);
   if (sanitised === name) {
     return sanitised;
   } else {
-    const needsQuotes = /.*[:_\-.].*/.test(fieldName) || name.startsWith("@");
-    let builder = sanitised + ": ";
+    const needsQuotes = /.*[:_\-.].*/.test(fieldName) || name.startsWith('@');
+    let builder = sanitised + ': ';
     if (needsQuotes) {
-      builder += '"' + (name.startsWith("@") ? name : fieldName) + '"';
+      builder += '"' + (name.startsWith('@') ? name : fieldName) + '"';
     } else {
-      builder += name.startsWith("@") ? name : fieldName;
+      builder += name.startsWith('@') ? name : fieldName;
     }
     return builder;
   }
@@ -65,5 +65,5 @@ export function capitalize(s: string): string {
 }
 
 export function genArrayItems(name: string): string {
-  return capitalize(genParamName(name)) + "Item";
+  return capitalize(genParamName(name)) + 'Item';
 }

@@ -1,7 +1,7 @@
 // import { trace } from './Trace'; // Uncomment if you wish to use tracing
 
-import { Obj } from "./types/obj";
-import { Type } from "./types/type";
+import { Obj } from './types/obj';
+import { Type } from './types/type';
 
 export class Context {
   private stack: Type[];
