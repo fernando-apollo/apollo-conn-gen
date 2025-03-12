@@ -9,6 +9,7 @@ yarn-error.log*
 .pnp.js
 
 .vscode/*
-cli
+/cli
 dist
+build
 .idea

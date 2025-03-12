@@ -209,7 +209,7 @@ function isRoverAvailable(command: string): [boolean, string?] {
 }
 
 function compose(schemaPath: string) {
-  console.info('schemaPath', schemaPath);
+  // console.info('schemaPath', schemaPath);
 
   const rover: [boolean, (string | undefined)?] = isRoverAvailable('rover');
   if (!rover[0]) {

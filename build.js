@@ -3,12 +3,12 @@ const { dependencies, devDependencies } = require('./package.json');
 const { Generator } = require('npm-dts');
 
 new Generator({
-  entry: 'src/oas/gen.ts',
+  entry: 'src/index.ts',
   output: 'dist/index.d.ts',
 }).generate();
 
 const sharedConfig = {
-  entryPoints: ['src/oas/gen.ts'],
+  entryPoints: ['src/index.ts'],
   bundle: true,
   minify: false,
   keepNames: true,

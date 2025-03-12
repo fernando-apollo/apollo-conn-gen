@@ -8,6 +8,7 @@ import fs from 'fs';
 
 console.log = () => {};
 console.warn = () => {};
+console.error = () => {};
 
 const base =
   '/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/java-apollo-connector-gen/src/test/resources';
