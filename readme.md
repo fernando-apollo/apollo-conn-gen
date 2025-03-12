@@ -1,5 +1,7 @@
 # OAS to Apollo Connector Generator
 
+**NOTE: THIS TOOL IS BEING REFACTORED -- PLEASE DO NOT USE BEFORE CONTACTING ME.**
+
 ## Introduction
 
 The OAS to Apollo Connector Generator is a tool designed to create
@@ -20,7 +22,7 @@ OAS files you'd like to add to our test suite, please share them.*
 
    ```bash
    git clone https://github.com/fernando-apollo/oas-to-connector.git
-   cd oas-to-connector
+   cd oas-helpers-to-connector
    ```
 
 2. **Install Dependencies**:
@@ -60,7 +62,7 @@ OAS files you'd like to add to our test suite, please share them.*
 To generate an Apollo Connector from your OAS file, run:
 
 ```bash
-node ./cli/index.js <path-to-your-oas-file>
+node ./cli/index.js <path-to-your-oas-helpers-file>
 ```
 
 Replace `<path-to-your-oas-file>` with the relative or absolute path to your OAS YAML or JSON file.

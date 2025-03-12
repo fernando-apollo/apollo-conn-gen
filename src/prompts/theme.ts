@@ -1,6 +1,6 @@
 import { Status } from '@inquirer/core';
-import Context from '../parser/context';
-import { IType } from '../parser/nodes/type';
+import Context from '../oas/context';
+import { IType } from '../oas/nodes/type';
 
 export interface RenderContext {
   /**
@@ -24,7 +24,7 @@ export interface RenderContext {
    */
   selected: string[];
   /**
-   * The Context used by the parser
+   * The Context used by the oas
    */
   context: Context;
 }
