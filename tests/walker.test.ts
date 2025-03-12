@@ -1,9 +1,7 @@
 import * as os from 'os';
 import * as path from 'path';
-// @ts-ignore
 import fs from 'fs';
 import { execSync, spawnSync } from 'child_process';
-// @ts-ignore
 import _ from 'lodash';
 import { ConnectorWriter, StringWriter } from '../src/json/io/writer';
 import { Walker } from '../src/json/walker/walker';
