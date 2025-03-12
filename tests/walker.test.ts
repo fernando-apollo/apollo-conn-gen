@@ -24,6 +24,16 @@ afterEach(() => {
   writer.clear();
 });
 
+afterAll(async () => {
+  const directory = path.join(os.tmpdir() + '/walker');
+  const files = fs.readdirSync(directory);
+
+  for (const file of files) {
+    const filePath = path.join(directory, file);
+    fs.rmSync(filePath, { recursive: true, force: true });
+  }
+})
+
 describe('Walker Test Suite', () => {
   it('should construct Walker from JSON string and store types in context', () => {
     const json = `{
@@ -169,7 +179,7 @@ async function run(
   expect(schema).toBeDefined();
 
   const schemaFile = path.join(
-    os.tmpdir(),
+    os.tmpdir() + '/walker',
     fileOrFolder.replace(/\.yaml|\.json|\.yml/, '') + '.graphql'
   );
 
@@ -209,7 +219,7 @@ function isRoverAvailable(command: string): [boolean, string?] {
 }
 
 function compose(schemaPath: string) {
-  // console.info('schemaPath', schemaPath);
+  console.info('schemaPath', schemaPath);
 
   const rover: [boolean, (string | undefined)?] = isRoverAvailable('rover');
   if (!rover[0]) {
