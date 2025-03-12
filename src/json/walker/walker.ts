@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Context } from './context';
 import { Type } from './types/type';
 import { Obj } from './types/obj';
@@ -121,43 +122,24 @@ export class Walker {
   public walkJson(json: string): void {
     const rootElement = JSON.parse(json);
     this.walkElement(this.context, null, 'root', rootElement);
-    trace(
-      this.context,
-      '   [walkSource]',
-      'types found: ' + this.context.getTypes().length
-    );
+    trace(this.context, '   [walkSource]', 'types found: ' + this.context.getTypes().length);
   }
 
   // Walk an element in the JSON tree
-  private walkElement(
-    context: Context,
-    parent: Type | null,
-    name: string,
-    element: any
-  ): Type {
+  private walkElement(context: Context, parent: Type | null, name: string, element: any): Type {
     trace(context, '-> [walkElement]', 'in: ' + name);
     let result: Type;
 
-    if (
-      typeof element === 'object' &&
-      !Array.isArray(element) &&
-      element !== null
-    ) {
+    if (typeof element === 'object' && !Array.isArray(element) && element !== null) {
       // JSON object
       result = this.walkObject(context, parent, name, element);
       context.store(result);
     } else if (Array.isArray(element)) {
       result = this.walkArray(context, parent, name, element);
-    } else if (
-      typeof element === 'string' ||
-      typeof element === 'number' ||
-      typeof element === 'boolean'
-    ) {
+    } else if (typeof element === 'string' || typeof element === 'number' || typeof element === 'boolean') {
       result = this.walkPrimitive(context, parent, name, element);
     } else {
-      throw new Error(
-        "Cannot yet handle '" + name + "' of type " + typeof element
-      );
+      throw new Error("Cannot yet handle '" + name + "' of type " + typeof element);
     }
 
     trace(context, '<- [walkElement]', 'out: ' + name);
@@ -165,12 +147,7 @@ export class Walker {
   }
 
   // Walk a JSON object
-  private walkObject(
-    context: Context,
-    parent: Type | null,
-    name: string,
-    object: any
-  ): Obj {
+  private walkObject(context: Context, parent: Type | null, name: string, object: any): Obj {
     trace(context, '-> [walkObject]', 'in: ' + name);
     const result = new Obj(name, parent);
     const fieldSet = Object.keys(object);
@@ -188,12 +165,7 @@ export class Walker {
   }
 
   // Walk a JSON array
-  private walkArray(
-    context: Context,
-    parent: Type | null,
-    name: string,
-    array: any[]
-  ): ArrayType {
+  private walkArray(context: Context, parent: Type | null, name: string, array: any[]): ArrayType {
     trace(context, '-> [walkArray]', 'in: ' + name);
     const result = new ArrayType(name, parent);
     if (array.length > 0) {
@@ -201,23 +173,14 @@ export class Walker {
       const arrayType = this.walkElement(context, parent, name, firstElement);
       result.setArrayType(arrayType);
     } else {
-      warn(
-        context,
-        '   [walkArray]',
-        "Array is empty -- cannot derive type for field '" + name + "'"
-      );
+      warn(context, '   [walkArray]', "Array is empty -- cannot derive type for field '" + name + "'");
     }
     trace(context, '-> [walkArray]', 'in: ' + name);
     return result;
   }
 
   // Walk a primitive JSON value
-  private walkPrimitive(
-    context: Context,
-    parent: Type | null,
-    name: string,
-    primitive: any
-  ): Scalar {
+  private walkPrimitive(context: Context, parent: Type | null, name: string, primitive: any): Scalar {
     let result: Scalar;
     if (typeof primitive === 'string') {
       result = new Scalar(name, parent, 'String');
@@ -232,24 +195,13 @@ export class Walker {
   }
 
   // Utility method for naming conflict resolution
-  private static generateNewObjType(
-    generatedSet: Map<string, Type>,
-    t: Type,
-    typeName: string
-  ): string {
+  private static generateNewObjType(generatedSet: Map<string, Type>, t: Type, typeName: string): string {
     let newName: string;
     let type: Type | null = t;
     do {
       const parent: Type | null = type.getParent();
-      const parentName =
-        parent === null
-          ? ''
-          : sanitiseField(parent.getName()).replace(/^\w/, (c) =>
-              c.toUpperCase()
-            );
-      const thisName = sanitiseField(typeName).replace(/^\w/, (c) =>
-        c.toUpperCase()
-      );
+      const parentName = parent === null ? '' : sanitiseField(parent.getName()).replace(/^\w/, (c) => c.toUpperCase());
+      const thisName = sanitiseField(typeName).replace(/^\w/, (c) => c.toUpperCase());
       newName = parentName + thisName;
       type = parent;
     } while (type !== null && generatedSet.has(newName));
