@@ -6,6 +6,7 @@ import { ArrayType } from './types/array';
 import { trace, warn } from './log/trace';
 import { Scalar } from './types/scalar';
 import { sanitiseField } from './naming';
+import _ from 'lodash';
 
 export class Walker {
   private context: Context;
@@ -80,7 +81,7 @@ export class Walker {
         let typeName = obj.getType();
         if (generatedSet.has(typeName)) {
           // If same type, skip generation
-          if (obj.equals(generatedSet.get(typeName))) {
+          if (_.isEqual(obj, generatedSet.get(typeName))) {
             return;
           }
           obj.setType(Walker.generateNewObjType(generatedSet, t, typeName));

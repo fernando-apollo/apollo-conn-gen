@@ -3,10 +3,13 @@ import * as os from 'os';
 import * as path from 'path';
 import Gen from '../src/oas/gen';
 import Writer from '../src/oas/io/writer';
+// @ts-ignore
 import _ from 'lodash';
+// @ts-ignore
 import fs from 'fs';
 
 console.log = () => {};
+console.warn = () => {};
 
 const base =
   '/Users/fernando/Development/Apollo/connectors/projects/OasToConnector/java-apollo-connector-gen/src/test/resources';
