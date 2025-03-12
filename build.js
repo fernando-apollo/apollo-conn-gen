@@ -8,7 +8,7 @@ new Generator({
 }).generate();
 
 const sharedConfig = {
-  entryPoints: ['src/index.ts'],
+  entryPoints: ['src/oas/gen.ts', 'src/json/walker/walker.ts'],
   bundle: true,
   minify: false,
   keepNames: true,
@@ -21,12 +21,12 @@ const sharedConfig = {
 build({
   ...sharedConfig,
   platform: 'neutral', // for CJS
-  outfile: 'dist/index.js',
+  outdir: 'dist',
 });
 
 build({
   ...sharedConfig,
-  outfile: 'dist/index.esm.js',
   platform: 'node', // for ESM
+  outdir: 'dist',
   format: 'esm',
 });
