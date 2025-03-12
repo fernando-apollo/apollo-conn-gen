@@ -17,7 +17,7 @@ function walkSourceFile(source: string): void {
 
 async function main() {
   walkSourceFile(
-    '/Users/fernando/Development/Apollo/connectors/projects/JsonToConnector/src/test/resources/preferences/user/50.json'
+    '/Users/fernando/Development/Apollo/connectors/projects/JsonToConnector/src/test/resources/preferences/user/50.json',
   );
 }
 

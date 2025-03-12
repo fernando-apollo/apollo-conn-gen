@@ -67,5 +67,3 @@ export async function promptForSelection(gen: Gen, opts: any, types: IType[]) {
     types: types,
   });
 }
-
-
