@@ -10,7 +10,7 @@ import { Obj } from '../obj';
 import { Union } from '../union';
 import { Prop } from './prop';
 
-export  class PropObj extends Prop {
+export class PropObj extends Prop {
   constructor(
     parent: IType,
     name: string,

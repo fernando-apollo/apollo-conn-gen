@@ -108,7 +108,7 @@ export class OasGen {
   public generateSchema(paths: string[]): string {
     const writer: Writer = new Writer(this);
     writer.generate(paths);
-    return writer.flush()
+    return writer.flush();
   }
 
   public async visit(): Promise<void> {
