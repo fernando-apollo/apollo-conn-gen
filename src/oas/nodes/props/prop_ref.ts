@@ -1,21 +1,20 @@
-import Context from '../../context';
-import Prop from './prop';
+import { OasContext } from '../../oasContext';
+import { Prop } from './prop';
 
 import _ from 'lodash';
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../../log/trace';
-import { RenderContext } from '../../../prompts/theme';
-import Writer from '../../io/writer';
-import Naming from '../../utils/naming';
-import Arr from '../arr';
-import CircularRef from '../circular_ref';
-import Composed from '../comp';
-import Factory from '../factory';
-import Obj from '../obj';
+import { trace } from '../../log/trace';
 import { IType } from '../type';
-import Union from '../union';
+import { Writer } from '../../io/writer';
+import { Naming } from '../../utils/naming';
+import { Arr } from '../arr';
+import { CircularRef } from '../circular_ref';
+import { Composed } from '../comp';
+import { Factory } from '../factory';
+import { Obj } from '../obj';
+import { Union } from '../union';
 
-export default class PropRef extends Prop {
+export class PropRef extends Prop {
   get id(): string {
     return `prop:ref:#${this.name}`;
   }
@@ -47,7 +46,7 @@ export default class PropRef extends Prop {
     }
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -75,17 +74,17 @@ export default class PropRef extends Prop {
     context.leave(this);
   }
 
-  public getValue(_context: Context): string {
+  public getValue(_context: OasContext): string {
     const type = this.refType!;
     const name = type ? type.name : this.ref;
     return Naming.genTypeName(name!);
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(context: OasContext): string {
     return `${this.name}: ${Naming.getRefName(this.ref)} (Ref)`;
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [prop-ref:select]', 'in ' + this.name + ', ref: ' + this.ref);
     const fieldName = this.name;
     const sanitised = Naming.sanitiseFieldForSelect(fieldName);
@@ -109,7 +108,7 @@ export default class PropRef extends Prop {
     trace(context, '<- [prop-ref:select]', 'out ' + this.name + ', ref: ' + this.ref);
   }
 
-  protected generateValue(context: Context, writer: Writer): void {
+  protected generateValue(context: OasContext, writer: Writer): void {
     const type = this.refType;
 
     if (type && (type as IType) instanceof Arr) {

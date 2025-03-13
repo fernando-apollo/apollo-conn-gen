@@ -1,11 +1,11 @@
 import Oas from 'oas';
 import { ParameterObject, ResponseObject, SchemaObject } from 'oas/dist/types';
-import { trace } from '../log/trace';
+import { trace } from './log/trace';
 import { ReferenceObject } from './nodes/props/types';
-import { IType } from './nodes/type';
-import Naming from './utils/naming';
+import { IType } from './nodes';
+import { Naming } from './utils';
 
-export default class Context {
+export class OasContext {
   public static readonly COMPONENTS_SCHEMAS: string = '#/components/schemas/';
   public static readonly COMPONENTS_RESPONSES: string = '#/components/responses/';
   public static readonly PARAMETER_SCHEMAS: string = '#/components/parameters/';
@@ -44,7 +44,7 @@ export default class Context {
   }
 
   public lookupResponse(ref: string): ResponseObject | ReferenceObject | null {
-    if (ref && ref.startsWith(Context.COMPONENTS_RESPONSES)) {
+    if (ref && ref.startsWith(OasContext.COMPONENTS_RESPONSES)) {
       const definition = this.parser.getDefinition();
       const responses = definition.components?.responses ?? {};
 
@@ -56,7 +56,7 @@ export default class Context {
   }
 
   public lookupRef(ref: string | null): SchemaObject | null {
-    if (ref && ref.startsWith(Context.COMPONENTS_SCHEMAS)) {
+    if (ref && ref.startsWith(OasContext.COMPONENTS_SCHEMAS)) {
       const definition = this.parser.getDefinition();
       const schemas = definition.components?.schemas ?? {};
 
@@ -66,7 +66,7 @@ export default class Context {
   }
 
   public lookupParam(ref: string): ParameterObject | boolean {
-    if (ref && ref.startsWith(Context.PARAMETER_SCHEMAS)) {
+    if (ref && ref.startsWith(OasContext.PARAMETER_SCHEMAS)) {
       const definition = this.parser.getDefinition();
       const parameters = definition.components?.parameters ?? {};
 

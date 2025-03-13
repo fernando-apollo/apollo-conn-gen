@@ -1,8 +1,8 @@
-import { Scalar } from './scalar';
-import { Obj } from './obj';
+import { JsonScalar } from './jsonScalar';
+import { JsonObj } from './jsonObj';
 import { trace } from '../log/trace';
-import { Type } from './type';
-import { Context } from '../context';
+import { JsonType } from './jsonType';
+import { JsonContext } from '../jsonContext';
 import { sanitiseField, sanitiseFieldForSelect } from '../naming';
 import { IWriter } from '../../io/types';
 
@@ -11,22 +11,22 @@ function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export class ArrayType extends Type {
-  private arrayType: Type | null = null;
+export class JsonArray extends JsonType {
+  private arrayType: JsonType | null = null;
 
-  constructor(name: string, parent: Type | null) {
+  constructor(name: string, parent: JsonType | null) {
     super(name, parent);
   }
 
-  public setArrayType(type: Type): void {
+  public setArrayType(type: JsonType): void {
     this.arrayType = type;
   }
 
-  public getArrayType(): Type | null {
+  public getArrayType(): JsonType | null {
     return this.arrayType;
   }
 
-  public write(context: Context, writer: IWriter): void {
+  public write(context: JsonContext, writer: IWriter): void {
     trace(context, '[array:write]', '-> in: ' + this.getName());
     const field = sanitiseField(this.getName());
     const itemsType = this.getArrayType();
@@ -40,9 +40,9 @@ export class ArrayType extends Type {
     writer.write(field);
     writer.write(': [');
 
-    if (itemsType instanceof Scalar) {
+    if (itemsType instanceof JsonScalar) {
       writer.write(itemsType.getType());
-    } else if (itemsType instanceof Obj) {
+    } else if (itemsType instanceof JsonObj) {
       writer.write(itemsType.getType());
     } else {
       writer.write(capitalize(itemsType.getName()));
@@ -58,11 +58,11 @@ export class ArrayType extends Type {
     trace(context, '[array:write]', '<- out: ' + this.getName());
   }
 
-  public select(context: Context, writer: IWriter): void {
+  public select(context: JsonContext, writer: IWriter): void {
     trace(context, '[array:select]', '-> in: ' + this.getName());
     const itemsType = this.getArrayType();
 
-    if (itemsType instanceof Obj) {
+    if (itemsType instanceof JsonObj) {
       itemsType.select(context, writer);
     } else {
       const fieldName = sanitiseFieldForSelect(this.getName());

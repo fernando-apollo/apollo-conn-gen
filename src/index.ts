@@ -1,2 +1,3 @@
-import { Walker } from './json/walker/walker';
-import Gen from './oas/gen';
+// export * from './oas';
+export { JsonGen } from './json'
+export { OasGen } from './oas'

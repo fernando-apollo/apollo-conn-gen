@@ -1,18 +1,16 @@
 import _ from 'lodash';
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../../log/trace';
-import { RenderContext } from '../../../prompts/theme';
-import Context from '../../context';
-import Writer from '../../io/writer';
-import Naming from '../../utils/naming';
-import Composed from '../comp';
-import Obj from '../obj';
+import { trace } from '../../log/trace';
 import { IType, Type } from '../type';
-import Union from '../union';
-import Prop from './prop';
-import PropRef from './prop_ref';
+import { Composed } from '../comp';
+import { OasContext } from '../../oasContext';
+import { Writer } from '../../io/writer';
+import { Naming } from '../../utils/naming';
+import { Obj } from '../obj';
+import { Union } from '../union';
+import { Prop } from './prop';
 
-export default class PropObj extends Prop {
+export  class PropObj extends Prop {
   constructor(
     parent: IType,
     name: string,
@@ -32,7 +30,7 @@ export default class PropObj extends Prop {
     // this.updateName(parent);
   }
 
-  public forPrompt(_context: Context): string {
+  public forPrompt(_context: OasContext): string {
     return _.lowerFirst(this.name) + ': ' + Naming.getRefName(this.obj.name) + ' (Obj)';
   }
 
@@ -40,7 +38,7 @@ export default class PropObj extends Prop {
     return 'prop:obj:' + this.name;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -58,11 +56,11 @@ export default class PropObj extends Prop {
     context.leave(this);
   }
 
-  public getValue(context: Context): string {
+  public getValue(context: OasContext): string {
     return Naming.genTypeName(this.name);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [prop-obj:select]', 'in ' + this.name + ', obj: ' + this.obj.name);
 
     const fieldName = this.name;

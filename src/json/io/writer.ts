@@ -1,5 +1,5 @@
 import { IWriter } from './types';
-import { Walker } from '../walker/walker';
+import { JsonGen } from '../walker/jsonGen';
 
 export class StringWriter implements IWriter {
   builder: string[] = [];
@@ -18,7 +18,7 @@ export class StringWriter implements IWriter {
 }
 
 export class ConnectorWriter {
-  public static write(walker: Walker, writer: IWriter): void {
+  public static write(walker: JsonGen, writer: IWriter): void {
     this.writeConnector(writer);
     walker.writeTypes(writer);
     this.writeQuery(walker, writer);
@@ -36,7 +36,7 @@ export class ConnectorWriter {
 `);
   }
 
-  private static writeQuery(walker: Walker, writer: IWriter): void {
+  private static writeQuery(walker: JsonGen, writer: IWriter): void {
     writer.write(
       '\n' +
         `type Query {

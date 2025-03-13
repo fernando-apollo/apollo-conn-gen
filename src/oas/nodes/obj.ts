@@ -1,17 +1,17 @@
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../log/trace';
-import Context from '../context';
-import Writer from '../io/writer';
-import Naming from '../utils/naming';
-import Arr from './arr';
-import Factory from './factory';
-import Get from './get';
-import PropArray from './props/prop_array';
-import Ref from './ref';
-import Response from './response';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Naming } from '../utils/naming';
+import { Arr } from './arr';
+import { Factory } from './factory';
+import { Get } from './get';
+import { PropArray } from './props';
+import { Ref } from './ref';
+import { Response } from './response';
 import { IType, Type } from './type';
 
-export default class Obj extends Type {
+export class Obj extends Type {
   constructor(
     parent: IType | undefined,
     name: string,
@@ -21,7 +21,7 @@ export default class Obj extends Type {
     this.updateName();
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(context: OasContext): string {
     return `${Naming.getRefName(this.name)} (Obj)`;
   }
 
@@ -29,7 +29,7 @@ export default class Obj extends Type {
     return `obj:${this.name}`;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -52,7 +52,7 @@ export default class Obj extends Type {
     context.leave(this);
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     if (this.props.size === 0) {
       return;
     }
@@ -85,7 +85,7 @@ export default class Obj extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [obj::select]', `-> in: ${this.name}`);
 
     const selected = this.selectedProps(selection);
@@ -130,7 +130,7 @@ export default class Obj extends Type {
     this.name = name;
   }
 
-  private visitProperties(context: Context): void {
+  private visitProperties(context: OasContext): void {
     if (!this.schema.properties) {
       return;
     }

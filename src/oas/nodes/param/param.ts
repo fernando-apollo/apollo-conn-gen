@@ -1,13 +1,13 @@
 import { ParameterObject, SchemaObject } from 'oas/dist/types';
-import { trace } from '../../../log/trace';
-import { RenderContext } from '../../../prompts/theme';
-import Context from '../../context';
-import Writer from '../../io/writer';
-import Naming from '../../utils/naming';
-import Factory from '../factory';
+import { trace } from '../../log/trace';
+import { RenderContext } from '../../prompts/theme';
+import { OasContext } from '../../oasContext';
+import { Writer } from '../../io/writer';
+import { Naming } from '../../utils/naming';
+import { Factory } from '../factory';
 import { IType, Type } from '../type';
 
-export default class Param extends Type {
+export class Param extends Type {
   public resultType!: IType;
 
   constructor(
@@ -21,7 +21,7 @@ export default class Param extends Type {
     super(parent, name);
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -37,7 +37,7 @@ export default class Param extends Type {
     context.leave(this);
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [param::generate]', `-> in: ${this.name}`);
 
@@ -58,11 +58,11 @@ export default class Param extends Type {
     context.leave(this);
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(context: OasContext): string {
     return `Param{ name=${this.name}, required=${this.required}, defaultValue=${this.defaultValue}, props=${this.props}, resultType=${this.resultType} }`;
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     // do nothing
   }
 

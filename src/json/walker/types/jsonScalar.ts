@@ -1,13 +1,13 @@
 import { IWriter } from '../../io/types';
-import { Context } from '../context';
+import { JsonContext } from '../jsonContext';
 import { trace } from '../log/trace';
 import { sanitiseField, sanitiseFieldForSelect } from '../naming';
-import { Type } from './type';
+import { JsonType } from './jsonType';
 
-export class Scalar extends Type {
+export class JsonScalar extends JsonType {
   private readonly type: string;
 
-  constructor(name: string, parent: Type | null, type: string) {
+  constructor(name: string, parent: JsonType | null, type: string) {
     super(name, parent);
     this.type = type;
   }
@@ -16,7 +16,7 @@ export class Scalar extends Type {
     return this.type;
   }
 
-  public write(context: Context, writer: IWriter): void {
+  public write(context: JsonContext, writer: IWriter): void {
     trace(context, '[scalar:write]', '-> in: ' + this.getName());
     writer.write(this.indent(context));
 
@@ -29,7 +29,7 @@ export class Scalar extends Type {
     trace(context, '[scalar:write]', '<- out: ' + this.getName());
   }
 
-  public select(context: Context, writer: IWriter): void {
+  public select(context: JsonContext, writer: IWriter): void {
     trace(context, '[scalar:select]', '-> in: ' + this.getName());
 
     const originalName = this.getName();

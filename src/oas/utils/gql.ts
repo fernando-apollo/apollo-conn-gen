@@ -1,6 +1,6 @@
 import { SchemaObject } from 'oas/dist/types';
 
-export default class GqlUtils {
+export class GqlUtils {
   public static getGQLScalarType(schema: SchemaObject): string {
     switch (schema.type) {
       case 'string':

@@ -1,16 +1,16 @@
 import { Operation } from 'oas/dist/operation';
 import { MediaTypeObject, ParameterObject, ResponseObject, SchemaObject } from 'oas/dist/types';
 
-import { trace, warn } from '../../log/trace';
-import Context from '../context';
-import Writer from '../io/writer';
-import Naming from '../utils/naming';
-import Factory from './factory';
-import Param from './param/param';
+import { trace, warn } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Naming } from '../utils/naming';
+import { Factory } from './factory';
+import { Param } from './param';
 import { ReferenceObject } from './props/types';
 import { IType, Type } from './type';
 
-export default class Get extends Type {
+export class Get extends Type {
   public resultType?: IType;
   public params: Param[] = [];
 
@@ -25,7 +25,7 @@ export default class Get extends Type {
     return `get:${this.name}`;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       trace(context, '-> [get:visit]', this.name + ' already visited.');
       return;
@@ -45,11 +45,11 @@ export default class Get extends Type {
     context.leave(this);
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(_context: OasContext): string {
     return `[GET] ${this.name}`;
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [get::generate]', `-> in: ${this.name}`);
 
@@ -80,7 +80,7 @@ export default class Get extends Type {
     context.leave(this);
   }
 
-  public select(_context: Context, _writer: Writer, _selection: string[]) {
+  public select(_context: OasContext, _writer: Writer, _selection: string[]) {
     // do nothing
   }
 
@@ -88,7 +88,7 @@ export default class Get extends Type {
     return Naming.genOperationName(this.operation.path, this.operation);
   }
 
-  private visitParameters(context: Context): void {
+  private visitParameters(context: OasContext): void {
     trace(context, '-> [get::params]', 'in: ' + this.name);
 
     const parameters = this.operation.getParameters();
@@ -104,7 +104,7 @@ export default class Get extends Type {
     trace(context, '<- [get::params]', 'out: ' + this.name);
   }
 
-  private visitResponses = (context: Context) => {
+  private visitResponses = (context: OasContext) => {
     const statusCodes = this.operation.getResponseStatusCodes();
 
     if (!statusCodes.includes('200') && !statusCodes.includes('default')) {
@@ -121,7 +121,7 @@ export default class Get extends Type {
     }
   };
 
-  private visitResponse(context: Context, code: string, response: ResponseObject): void {
+  private visitResponse(context: OasContext, code: string, response: ResponseObject): void {
     const content = response.content as MediaTypeObject;
 
     if ('$ref' in response) {
@@ -143,7 +143,7 @@ export default class Get extends Type {
     }
   }
 
-  private visitResponseContent(context: Context, _code: string, media: MediaTypeObject): void {
+  private visitResponseContent(context: OasContext, _code: string, media: MediaTypeObject): void {
     trace(context, '-> [get::responses::content]', 'in ' + this.name);
     const schema = media!.schema as SchemaObject;
 
@@ -164,7 +164,7 @@ export default class Get extends Type {
     trace(context, '<- [get::responses::content]', 'out ' + this.name);
   }
 
-  private visitResponseRef(context: Context, ref: ReferenceObject): void {
+  private visitResponseRef(context: OasContext, ref: ReferenceObject): void {
     trace(context, '-> [get::responses::ref]', `in: ${this.name}, ref: ${ref.$ref}`);
 
     const lookup = context.lookupResponse(ref.$ref!);
@@ -180,7 +180,7 @@ export default class Get extends Type {
     trace(context, '<- [get::responses::ref]', `out: ${this.name}, ref: ${ref.$ref}`);
   }
 
-  private generateParameters(context: Context, writer: Writer, selection: string[]): void {
+  private generateParameters(context: OasContext, writer: Writer, selection: string[]): void {
     const sorted = this.params.sort((a, b) => (b.required ? 1 : 0) - (a.required ? 1 : 0));
 
     if (sorted.length === 0) {
@@ -199,7 +199,7 @@ export default class Get extends Type {
     writer.append(')');
   }
 
-  private visitParameter(context: Context, parent: Type, p: ParameterObject): Param {
+  private visitParameter(context: OasContext, parent: Type, p: ParameterObject): Param {
     trace(context, '->[visitParameter]', 'begin: ' + p.name);
 
     const param = Factory.fromParam(context, parent, p);

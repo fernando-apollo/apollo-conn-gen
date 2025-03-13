@@ -1,34 +1,34 @@
 import { IWriter } from '../../io/types';
-import { Context } from '../context';
+import { JsonContext } from '../jsonContext';
 import { trace } from '../log/trace';
 import { sanitiseField, sanitiseFieldForSelect } from '../naming';
-import { Type } from './type';
+import { JsonType } from './jsonType';
 
 function capitalize(s: string): string {
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export class Obj extends Type {
+export class JsonObj extends JsonType {
   private type: string;
-  private fields: Map<string, Type>;
+  private fields: Map<string, JsonType>;
 
-  constructor(name: string, parent: Type | null) {
+  constructor(name: string, parent: JsonType | null) {
     super(name, parent);
-    this.type = Obj.generateType(parent, name);
-    this.fields = new Map<string, Type>();
+    this.type = JsonObj.generateType(parent, name);
+    this.fields = new Map<string, JsonType>();
   }
 
-  private static generateType(parent: Type | null, name: string): string {
+  private static generateType(parent: JsonType | null, name: string): string {
     const parentName = parent === null ? '' : capitalize(sanitiseField(parent.getName()));
     return parentName + capitalize(sanitiseField(name));
   }
 
-  public add(field: string, type: Type): void {
+  public add(field: string, type: JsonType): void {
     this.fields.set(field, type);
   }
 
-  public getFields(): Map<string, Type> {
+  public getFields(): Map<string, JsonType> {
     return this.fields;
   }
 
@@ -40,14 +40,14 @@ export class Obj extends Type {
     this.type = type;
   }
 
-  public write(context: Context, writer: IWriter): void {
+  public write(context: JsonContext, writer: IWriter): void {
     if (this.fields.size === 0) return;
     trace(context, '[obj:write]', '-> in: ' + this.getType());
     context.enter(this);
     writer.write('type ' + this.getType() + ' {\n');
 
     for (const field of this.fields.values()) {
-      if (field instanceof Obj) {
+      if (field instanceof JsonObj) {
         const name = sanitiseField(field.getName());
         writer.write(this.indent(context) + name + ': ' + field.getType() + '\n');
       } else {
@@ -60,7 +60,7 @@ export class Obj extends Type {
     trace(context, '[obj:write]', '<- out: ' + this.getType());
   }
 
-  public select(context: Context, writer: IWriter): void {
+  public select(context: JsonContext, writer: IWriter): void {
     if (this.fields.size === 0) return;
     trace(context, '[obj:select]', '-> in: ' + this.getName());
     context.enter(this);

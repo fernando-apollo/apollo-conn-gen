@@ -92,7 +92,7 @@ class FinalConverter extends AbstractConverter {
   }
 }
 
-export default class Naming {
+export class Naming {
   public static genParamName(param: string): string {
     return Naming.PARAM_CONVERTER.convert(param);
   }
@@ -132,8 +132,7 @@ export default class Naming {
           .filter((p) => p.required && p.in.toLowerCase() !== 'header')
           .map((p) => {
             const paramName = Naming.genParamName(p.name);
-            const result = `By${_.upperFirst(paramName)}`;
-            return result;
+            return `By${_.upperFirst(paramName)}`;
           })
       : [];
 

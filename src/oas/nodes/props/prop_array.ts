@@ -1,24 +1,21 @@
-import Prop from './prop';
-
-import { trace } from '../../../log/trace';
-import { RenderContext } from '../../../prompts/theme';
-import Context from '../../context';
-import Writer from '../../io/writer';
-import Naming from '../../utils/naming';
-import Factory from '../factory';
+import { trace } from '../../log/trace';
+import { OasContext } from '../../oasContext';
+import { Writer } from '../../io/writer';
+import { Naming } from '../../utils';
+import { Factory } from '../factory';
+import { PropObj } from './prop_obj';
+import { PropRef } from './prop_ref';
 import { IType } from '../type';
-import PropObj from './prop_obj';
-import PropRef from './prop_ref';
-import PropScalar from './prop_scalar';
+import { Prop } from './prop';
 
-export default class PropArray extends Prop {
+export class PropArray extends Prop {
   public items?: Prop;
 
   get id(): string {
     return `prop:array:#${this.name}`;
   }
 
-  public override visit(context: Context): void {
+  public override visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -41,7 +38,7 @@ export default class PropArray extends Prop {
     }
   }
 
-  public override getValue(context: Context): string {
+  public override getValue(context: OasContext): string {
     return `[${this.items!.getValue(context)}]`;
   }
 
@@ -61,11 +58,11 @@ export default class PropArray extends Prop {
     }
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(context: OasContext): string {
     return `${this.name}: [${this.items!.getValue(context)}]`;
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [prop-array:select]', 'in: ' + this.name);
 
     const fieldName = this.name;

@@ -1,16 +1,15 @@
-import _ from 'lodash';
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../log/trace';
-import Context from '../context';
-import Writer from '../io/writer';
-import Naming from '../utils/naming';
-import Factory from './factory';
-import Prop from './props/prop';
-import Ref from './ref';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Naming } from '../utils/naming';
+import { Factory } from './factory';
+import { Prop } from './props/prop';
+import { Ref } from './ref';
 import { IType, Type } from './type';
 import { ReferenceObject } from './props/types';
 
-export default class Composed extends Type {
+export class Composed extends Type {
   get id(): string {
     return `comp:${this.name}`;
   }
@@ -23,11 +22,11 @@ export default class Composed extends Type {
     super(parent, name);
   }
 
-  public forPrompt(_context: Context): string {
+  public forPrompt(_context: OasContext): string {
     return `${Naming.getRefName(this.name)} (Comp)`;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -59,7 +58,7 @@ export default class Composed extends Type {
     context.leave(this);
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [comp::generate]', `-> in: ${this.name}`);
 
@@ -89,7 +88,7 @@ export default class Composed extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [comp::select]', `-> in: ${this.name}`);
     if (!this.consolidated) {
       this.consolidate(selection);
@@ -151,7 +150,7 @@ export default class Composed extends Type {
     return ids;
   }
 
-  private visitAllOfNode(context: Context, schema: SchemaObject): void {
+  private visitAllOfNode(context: OasContext, schema: SchemaObject): void {
     const allOfs = schema.allOf || [];
     const refs = allOfs.map((s) => (s as ReferenceObject).$ref);
 
@@ -173,7 +172,7 @@ export default class Composed extends Type {
     trace(context, '<- [composed::all-of]', `out: '${this.name}' of: ${allOfs.length} - refs: ${refs}`);
   }
 
-  private visitOneOfNode(context: Context, schema: SchemaObject): void {
+  private visitOneOfNode(context: OasContext, schema: SchemaObject): void {
     const oneOfs = schema.oneOf || [];
     trace(context, '-> [composed::one-of]', `in: OneOf ${this.name} with size: ${oneOfs.length}`);
 

@@ -1,8 +1,8 @@
-import { trace } from '../../log/trace';
-import Context from '../context';
-import Writer from '../io/writer';
-import Factory from './factory';
-import Prop from './props/prop';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Factory } from './factory';
+import { Prop } from './props/prop';
 
 export interface IType {
   name: string;
@@ -12,25 +12,25 @@ export interface IType {
   props: Map<string, Prop>;
   id: string;
 
-  forPrompt(context: Context): string;
+  forPrompt(context: OasContext): string;
 
   add(child: IType): void;
 
   ancestors(): IType[];
 
-  visit(context: Context): void;
+  visit(context: OasContext): void;
 
-  generate(context: Context, writer: Writer, selection: string[]): void;
+  generate(context: OasContext, writer: Writer, selection: string[]): void;
 
   pathToRoot(): string;
 
   path(): string;
 
-  expand(context: Context): IType[];
+  expand(context: OasContext): IType[];
 
   find(path: string, collection: IType[]): IType | boolean;
 
-  select(context: Context, writer: Writer, selection: string[]): void;
+  select(context: OasContext, writer: Writer, selection: string[]): void;
 }
 
 export abstract class Type implements IType {
@@ -50,11 +50,11 @@ export abstract class Type implements IType {
     this._props = new Map<string, Prop>();
   }
 
-  public abstract visit(context: Context): void;
+  public abstract visit(context: OasContext): void;
 
-  public abstract forPrompt(context: Context): string;
+  public abstract forPrompt(context: OasContext): string;
 
-  public abstract select(context: Context, writer: Writer, selection: string[]): void;
+  public abstract select(context: OasContext, writer: Writer, selection: string[]): void;
 
   public find(path: string, collection: IType[]): IType | boolean {
     const parts = path.split('>');
@@ -78,7 +78,7 @@ export abstract class Type implements IType {
     return current || false;
   }
 
-  public expand(context: Context): IType[] {
+  public expand(context: OasContext): IType[] {
     trace(context, '-> [expand]', `in: path: ${this.path()}`);
     if (!this.visited) {
       this.visit(context);
@@ -95,7 +95,7 @@ export abstract class Type implements IType {
     // }
   }
 
-  public abstract generate(context: Context, writer: Writer, selection: string[]): void;
+  public abstract generate(context: OasContext, writer: Writer, selection: string[]): void;
 
   get id() {
     return this.name;

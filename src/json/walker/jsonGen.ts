@@ -1,22 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Context } from './context';
-import { Type } from './types/type';
-import { Obj } from './types/obj';
-import { ArrayType } from './types/array';
+import { JsonContext } from './jsonContext';
+import { JsonArray, JsonObj, JsonScalar, JsonType } from './types';
 import { trace, warn } from './log/trace';
-import { Scalar } from './types/scalar';
 import { sanitiseField } from './naming';
 import _ from 'lodash';
+import { ConnectorWriter, StringWriter } from '../io';
 
-export class Walker {
-  private context: Context;
+export class JsonGen {
+  private context: JsonContext;
 
   // Private constructor
   private constructor() {
-    this.context = new Context();
+    this.context = new JsonContext();
   }
 
-  public getContext(): Context {
+  public getContext(): JsonContext {
     return this.context;
   }
 
@@ -46,15 +44,21 @@ export class Walker {
   //   return walker;
   // }
 
-  public static new(): Walker {
-    return new Walker();
+  public static new(): JsonGen {
+    return new JsonGen();
   }
 
   // Factory method from a JSON string
-  public static fromReader(json: string): Walker {
-    const walker = new Walker();
+  public static fromReader(json: string): JsonGen {
+    const walker = new JsonGen();
     walker.walkJson(json);
     return walker;
+  }
+
+  public generateSchema(): string {
+    const writer = new StringWriter();
+    ConnectorWriter.write(this, writer);
+    return writer.flush();
   }
 
   // Writes selection using a given Writer
@@ -71,20 +75,20 @@ export class Walker {
     const types = this.context.getTypes();
     const root = types.find((t) => t.getParent() === null);
     if (root) {
-      const orderedSet = new Set<Type>();
+      const orderedSet = new Set<JsonType>();
       this.writeType(root, orderedSet);
 
-      const generatedSet = new Map<string, Type>();
+      const generatedSet = new Map<string, JsonType>();
       orderedSet.forEach((t) => {
         // Assumes t is an Obj
-        const obj = t as Obj;
+        const obj = t as JsonObj;
         let typeName = obj.getType();
         if (generatedSet.has(typeName)) {
           // If same type, skip generation
           if (_.isEqual(obj, generatedSet.get(typeName))) {
             return;
           }
-          obj.setType(Walker.generateNewObjType(generatedSet, t, typeName));
+          obj.setType(JsonGen.generateNewObjType(generatedSet, t, typeName));
           typeName = obj.getType();
         }
         t.write(this.context, writer);
@@ -96,15 +100,15 @@ export class Walker {
   }
 
   // Recursive helper to order types
-  private writeType(type: Type, orderedSet: Set<Type>): void {
-    if (type instanceof Obj) {
+  private writeType(type: JsonType, orderedSet: Set<JsonType>): void {
+    if (type instanceof JsonObj) {
       // Traverse children first
-      for (const child of Array.from((type as Obj).getFields().values())) {
+      for (const child of Array.from((type as JsonObj).getFields().values())) {
         this.writeType(child, orderedSet);
       }
       orderedSet.add(type);
-    } else if (type instanceof ArrayType) {
-      const arrayType = (type as ArrayType).getArrayType();
+    } else if (type instanceof JsonArray) {
+      const arrayType = (type as JsonArray).getArrayType();
       if (arrayType) {
         this.writeType(arrayType, orderedSet);
       }
@@ -127,9 +131,9 @@ export class Walker {
   }
 
   // Walk an element in the JSON tree
-  private walkElement(context: Context, parent: Type | null, name: string, element: any): Type {
+  private walkElement(context: JsonContext, parent: JsonType | null, name: string, element: any): JsonType {
     trace(context, '-> [walkElement]', 'in: ' + name);
-    let result: Type;
+    let result: JsonType;
 
     if (typeof element === 'object' && !Array.isArray(element) && element !== null) {
       // JSON object
@@ -148,9 +152,9 @@ export class Walker {
   }
 
   // Walk a JSON object
-  private walkObject(context: Context, parent: Type | null, name: string, object: any): Obj {
+  private walkObject(context: JsonContext, parent: JsonType | null, name: string, object: any): JsonObj {
     trace(context, '-> [walkObject]', 'in: ' + name);
-    const result = new Obj(name, parent);
+    const result = new JsonObj(name, parent);
     const fieldSet = Object.keys(object);
     trace(context, '  [walkObject]', 'fieldSet: ' + fieldSet);
 
@@ -166,9 +170,9 @@ export class Walker {
   }
 
   // Walk a JSON array
-  private walkArray(context: Context, parent: Type | null, name: string, array: any[]): ArrayType {
+  private walkArray(context: JsonContext, parent: JsonType | null, name: string, array: any[]): JsonArray {
     trace(context, '-> [walkArray]', 'in: ' + name);
-    const result = new ArrayType(name, parent);
+    const result = new JsonArray(name, parent);
     if (array.length > 0) {
       const firstElement = array[0];
       const arrayType = this.walkElement(context, parent, name, firstElement);
@@ -181,14 +185,14 @@ export class Walker {
   }
 
   // Walk a primitive JSON value
-  private walkPrimitive(context: Context, parent: Type | null, name: string, primitive: any): Scalar {
-    let result: Scalar;
+  private walkPrimitive(context: JsonContext, parent: JsonType | null, name: string, primitive: any): JsonScalar {
+    let result: JsonScalar;
     if (typeof primitive === 'string') {
-      result = new Scalar(name, parent, 'String');
+      result = new JsonScalar(name, parent, 'String');
     } else if (typeof primitive === 'boolean') {
-      result = new Scalar(name, parent, 'Boolean');
+      result = new JsonScalar(name, parent, 'Boolean');
     } else if (typeof primitive === 'number') {
-      result = new Scalar(name, parent, 'Int');
+      result = new JsonScalar(name, parent, 'Int');
     } else {
       throw new Error('Cannot yet handle primitive: ' + primitive);
     }
@@ -196,11 +200,11 @@ export class Walker {
   }
 
   // Utility method for naming conflict resolution
-  private static generateNewObjType(generatedSet: Map<string, Type>, t: Type, typeName: string): string {
+  private static generateNewObjType(generatedSet: Map<string, JsonType>, t: JsonType, typeName: string): string {
     let newName: string;
-    let type: Type | null = t;
+    let type: JsonType | null = t;
     do {
-      const parent: Type | null = type.getParent();
+      const parent: JsonType | null = type.getParent();
       const parentName = parent === null ? '' : sanitiseField(parent.getName()).replace(/^\w/, (c) => c.toUpperCase());
       const thisName = sanitiseField(typeName).replace(/^\w/, (c) => c.toUpperCase());
       newName = parentName + thisName;

@@ -1,18 +1,15 @@
 import { IWriter } from '../../io/types';
-import { ArrayType } from './array';
-import { Obj } from './obj';
-import { Scalar } from './scalar';
 
 export interface Context {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getStack(): any[];
 }
 
-export abstract class Type {
+export abstract class JsonType {
   private readonly name: string;
-  private readonly parent: Type | null;
+  private readonly parent: JsonType | null;
 
-  constructor(name: string, parent: Type | null) {
+  constructor(name: string, parent: JsonType | null) {
     this.name = name;
     this.parent = parent;
   }
@@ -21,7 +18,7 @@ export abstract class Type {
     return this.name;
   }
 
-  public getParent(): Type | null {
+  public getParent(): JsonType | null {
     return this.parent;
   }
 
@@ -40,7 +37,7 @@ export abstract class Type {
   public id(): string {
     let paths = '';
     // eslint-disable-next-line @typescript-eslint/no-this-alias
-    let parent: Type | null = this;
+    let parent: JsonType | null = this;
     while ((parent = parent.getParent()) !== null) {
       paths = `/${parent.getName()}` + paths;
     }

@@ -1,32 +1,31 @@
 // import { trace } from './Trace'; // Uncomment if you wish to use tracing
 
-import { Obj } from './types/obj';
-import { Type } from './types/type';
+import { JsonObj, JsonType } from './types';
 
-export class Context {
-  private stack: Type[];
-  private types: Map<string, Type>;
+export class JsonContext {
+  private stack: JsonType[];
+  private types: Map<string, JsonType>;
 
   constructor() {
     this.stack = [];
-    this.types = new Map<string, Type>();
+    this.types = new Map<string, JsonType>();
   }
 
-  public getStack(): Type[] {
+  public getStack(): JsonType[] {
     return this.stack;
   }
 
-  public enter(element: Type): void {
+  public enter(element: JsonType): void {
     // trace(this, "[context]", "-> enter: (" + this.stack.length + ") " + element.getName());
     this.stack.push(element);
   }
 
-  public leave(element: Type): void {
+  public leave(element: JsonType): void {
     // trace(this, "[context]", "<- leave: (" + this.stack.length + ") " + element.getName());
     this.stack.pop();
   }
 
-  public store(type: Type): void {
+  public store(type: JsonType): void {
     if (this.types.has(type.id())) {
       this.merge(type);
     } else {
@@ -34,10 +33,10 @@ export class Context {
     }
   }
 
-  private merge(type: Type): void {
+  private merge(type: JsonType): void {
     const source = this.types.get(type.id());
     // Only merge if both are Obj instances
-    if (source instanceof Obj && type instanceof Obj) {
+    if (source instanceof JsonObj && type instanceof JsonObj) {
       type.getFields().forEach((value, key) => {
         source.getFields().set(key, value);
       });
@@ -45,7 +44,7 @@ export class Context {
     }
   }
 
-  public getTypes(): Type[] {
+  public getTypes(): JsonType[] {
     return Array.from(this.types.values());
   }
 }

@@ -1,15 +1,13 @@
-import { SchemaObject } from 'oas/dist/types';
 import { OpenAPIV3 } from 'openapi-types';
-import { trace } from '../../log/trace';
-import { RenderContext } from '../../prompts/theme';
-import Context from '../context';
-import Writer from '../io/writer';
-import Naming from '../utils/naming';
-import Factory from './factory';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Naming } from '../utils/naming';
+import { Factory } from './factory';
 import ArraySchemaObject = OpenAPIV3.ArraySchemaObject;
 import { IType, Type } from './type';
 
-export default class Arr extends Type {
+export class Arr extends Type {
   public itemsType?: IType;
 
   constructor(
@@ -25,7 +23,7 @@ export default class Arr extends Type {
     return 'array:' + (this.itemsType ? this.itemsType.name : 'unknown-yet');
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -40,11 +38,11 @@ export default class Arr extends Type {
     context.leave(this);
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(context: OasContext): string {
     return `${Naming.getRefName(this.name)} (Array)`;
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [array::generate]', `-> in: ${this.name}`);
 
@@ -58,7 +56,7 @@ export default class Arr extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [array::select]', `-> in: ${this.name}`);
 
     if (this.itemsType) {

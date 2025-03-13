@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import Gen from '../oas/gen';
+import Gen from '../oas/oasGen';
 
 import Writer from '../oas/io/writer';
 import { generateFromSelection, promptForSelection } from './oas-helpers';

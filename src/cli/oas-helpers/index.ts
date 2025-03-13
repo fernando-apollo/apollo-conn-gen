@@ -1,12 +1,12 @@
 /// internal functions
-import Gen from '../../oas/gen';
+import Gen from '../../oas/oasGen';
 import fs from 'fs';
 import Writer from '../../oas/io/writer';
 import { IType, Type } from '../../oas/nodes/type';
 import Composed from '../../oas/nodes/comp';
 import Union from '../../oas/nodes/union';
 import Ref from '../../oas/nodes/ref';
-import { typesPrompt } from '../../prompts/prompt';
+import { typesPrompt } from '../../oas/prompts/prompt';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function generateFromSelection(opts: any, gen: Gen) {

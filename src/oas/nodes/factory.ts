@@ -1,35 +1,32 @@
 import { Operation } from 'oas/dist/operation';
 import { ParameterObject, SchemaObject } from 'oas/dist/types';
-import { ReferenceObject } from './props/types';
-
-import _ from 'lodash';
-
-import { IType } from './type';
-
 import { OpenAPIV3 } from 'openapi-types';
-import { trace, warn } from '../../log/trace';
-import Context from '../context';
-import GqlUtils from '../utils/gql';
-import Naming from '../utils/naming';
-import Arr from './arr';
-import CircularRef from './circular_ref';
-import Composed from './comp';
-import En from './en';
-import Get from './get';
-import Obj from './obj';
-import Param from './param/param';
-import Prop from './props/prop';
-import PropArray from './props/prop_array';
-import PropObj from './props/prop_obj';
-import PropRef from './props/prop_ref';
 import ArraySchemaObject = OpenAPIV3.ArraySchemaObject;
-import PropScalar from './props/prop_scalar';
-import Ref from './ref';
-import Response from './response';
+import _ from 'lodash';
+import { ReferenceObject } from './props/types';
+import { IType } from './type';
+import { trace, warn } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Naming } from '../utils/naming';
+import { GqlUtils } from '../utils/gql';
+import { Arr } from './arr';
+import { CircularRef } from './circular_ref';
+import { Composed } from './comp';
+import { En } from './en';
+import { Get } from './get';
+import { Obj } from './obj';
+import { Param } from './param';
+import { Prop } from './props/prop';
+import { PropArray } from './props';
+import { PropObj } from './props';
+import { PropRef } from './props';
+import { PropScalar } from './props';
+import { Ref } from './ref';
+import { Response } from './response';
+import { Union } from './union';
 import { Scalar } from './scalar';
-import Union from './union';
 
-export default class Factory {
+export class Factory {
   public static createGet(name: string, op: Operation): Get {
     // result.originalPath = name;
     // result.summary = op.summary;
@@ -107,7 +104,7 @@ export default class Factory {
     return result;
   }
 
-  public static fromProp(context: Context, parent: IType, propertyName: string, schema: SchemaObject): Prop {
+  public static fromProp(context: OasContext, parent: IType, propertyName: string, schema: SchemaObject): Prop {
     if (!schema) {
       throw new Error(`Should have a schema defined for property '${propertyName}' (parent: '${parent.name}')`);
     }
@@ -164,13 +161,13 @@ export default class Factory {
     return prop;
   }
 
-  public static fromResponse(_context: Context, parent: IType, mediaSchema: SchemaObject): IType {
+  public static fromResponse(_context: OasContext, parent: IType, mediaSchema: SchemaObject): IType {
     // const content = Factory.fromSchema(response, mediaSchema);
     // response.response = content;
     return new Response(parent, 'r', mediaSchema);
   }
 
-  public static fromParam(context: Context, parent: IType, p: ParameterObject | ReferenceObject): Param {
+  public static fromParam(context: OasContext, parent: IType, p: ParameterObject | ReferenceObject): Param {
     let param: ParameterObject;
 
     if ('$ref' in p) {
@@ -195,7 +192,7 @@ export default class Factory {
     return new CircularRef(parent, child);
   }
 
-  public static fromUnion(_context: Context, parent: IType, oneOfs: SchemaObject[]): IType {
+  public static fromUnion(_context: OasContext, parent: IType, oneOfs: SchemaObject[]): IType {
     const union = new Union(parent, parent.name, oneOfs);
     parent.add(union);
     return union;

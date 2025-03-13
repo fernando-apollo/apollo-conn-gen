@@ -1,16 +1,14 @@
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../log/trace';
-import Context from '../context';
-import Writer from '../io/writer';
-import Naming from '../utils/naming';
-import Composed from './comp';
-import Factory from './factory';
-import Param from './param/param';
-import Prop from './props/prop';
-import Ref from './ref';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Naming } from '../utils/naming';
+import { Factory } from './factory';
+import { Prop } from './props';
+import { Ref } from './ref';
 import { IType, Type } from './type';
 
-export default class Union extends Type {
+export class Union extends Type {
   get id(): string {
     return `union:${this.name}`;
   }
@@ -26,11 +24,11 @@ export default class Union extends Type {
     this.schemas = schemas;
   }
 
-  public forPrompt(_context: Context): string {
+  public forPrompt(_context: OasContext): string {
     return `${Naming.getRefName(this.name)} (Union)`;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -63,7 +61,7 @@ export default class Union extends Type {
     context.leave(this);
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     const schemas = this.schemas.map((s) => s.type);
     trace(context, '-> [union::generate]', 'in: ' + schemas);
@@ -108,7 +106,7 @@ export default class Union extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]): void {
+  public select(context: OasContext, writer: Writer, selection: string[]): void {
     trace(context, '-> [union::select]', `-> in: ${this.name}`);
     if (!this.consolidated) {
       this.consolidate(selection);
@@ -161,7 +159,7 @@ export default class Union extends Type {
     return ids;
   }
 
-  private visitProperties(context: Context): void {
+  private visitProperties(context: OasContext): void {
     // do nothing?
     // for (const [_, prop] of collected.entries()) {
     //   trace(context, '   [union]', 'prop: ' + prop);

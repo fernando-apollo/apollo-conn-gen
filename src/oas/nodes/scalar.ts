@@ -1,8 +1,7 @@
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../log/trace';
-import { RenderContext } from '../../prompts/theme';
-import Context from '../context';
-import Writer from '../io/writer';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
 import { IType, Type } from './type';
 
 export class Scalar extends Type {
@@ -13,15 +12,15 @@ export class Scalar extends Type {
   ) {
     super(parent, name);
   }
-  public visit(_context: Context): void {
+  public visit(_context: OasContext): void {
     this.visited = true;
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(_context: OasContext): string {
     return `Scalar Node - Name: ${this.name}, Value: ${this.schema}`;
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [scalar::generate]', `-> in: ${this.name}`);
     writer.write(this.name);
@@ -29,7 +28,7 @@ export class Scalar extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     // Scalars do not need to be selected.
   }
 }

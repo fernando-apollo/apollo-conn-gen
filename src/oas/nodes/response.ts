@@ -1,12 +1,11 @@
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../log/trace';
-import { RenderContext } from '../../prompts/theme';
-import Context from '../context';
-import Writer from '../io/writer';
-import Factory from './factory';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Factory } from './factory';
 import { IType, Type } from './type';
 
-export default class Response extends Type {
+export class Response extends Type {
   public schema: SchemaObject;
   public response?: IType;
 
@@ -20,7 +19,7 @@ export default class Response extends Type {
     return 'res:' + this.name;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       trace(context, '-> [res:visit]', this.name + ' already visited.');
       return;
@@ -37,11 +36,11 @@ export default class Response extends Type {
     context.leave(this);
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(context: OasContext): string {
     return 'Response';
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [response:generate]', `-> in: ${this.parent!.name}`);
 
@@ -53,7 +52,7 @@ export default class Response extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]): void {
+  public select(context: OasContext, writer: Writer, selection: string[]): void {
     trace(context, '-> [response:select]', `-> in: ${this.parent!.name}`);
 
     if (this.response) {

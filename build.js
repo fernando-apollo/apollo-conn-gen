@@ -8,13 +8,15 @@ new Generator({
 }).generate();
 
 const sharedConfig = {
-  entryPoints: ['src/oas/gen.ts', 'src/json/walker/walker.ts'],
+  entryPoints: ['./src/index.ts'],
   bundle: true,
   minify: false,
   keepNames: true,
+  // external: true,
   external: Object.keys(dependencies)
     .concat(['fs', 'path', 'util', 'http', '@readme/postman-to-openapi'])
     .concat(Object.keys(devDependencies)),
+  packages: 'external',
   sourcemap: true,
 };
 
@@ -26,6 +28,7 @@ build({
 
 build({
   ...sharedConfig,
+  // outfile: 'dist/index.esm.js',
   platform: 'node', // for ESM
   outdir: 'dist',
   format: 'esm',

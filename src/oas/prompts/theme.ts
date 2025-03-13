@@ -1,6 +1,6 @@
 import { Status } from '@inquirer/core';
-import Context from '../oas/context';
-import { IType } from '../oas/nodes/type';
+import { OasContext } from '../oasContext';
+import { IType } from '../nodes/type';
 
 export interface RenderContext {
   /**
@@ -26,7 +26,7 @@ export interface RenderContext {
   /**
    * The Context used by the oas
    */
-  context: Context;
+  context: OasContext;
 }
 
 export interface CustomTheme {

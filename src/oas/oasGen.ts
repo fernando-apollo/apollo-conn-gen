@@ -5,23 +5,23 @@ import { OASDocument } from 'oas/dist/types';
 import { OpenAPI } from 'openapi-types';
 
 import fs from 'fs';
-import { trace } from '../log/trace';
-import Context from './context';
-import Factory from './nodes/factory';
-import { IType } from './nodes/type';
-import Writer from './io/writer';
+import { OasContext } from './oasContext';
+import { Factory } from './nodes';
+import { IType } from './nodes';
+import { Writer } from './io';
+import { trace } from './log/trace';
 
 interface IGenOptions {
   skipValidation: boolean;
 }
 
-export default class Gen {
+export class OasGen {
   public static async fromData(
     data: ArrayBuffer,
     options: IGenOptions = {
       skipValidation: false,
     },
-  ): Promise<Gen> {
+  ): Promise<OasGen> {
     const normalizer: OASNormalize = new OASNormalize(data, {
       enablePaths: true,
     });
@@ -45,7 +45,7 @@ export default class Gen {
 
     const parser: Oas = new Oas(json as OASDocument);
     // return new ConnectorGen(oas, prompt);
-    return new Gen(parser);
+    return new OasGen(parser);
   }
 
   public static async fromFile(
@@ -54,7 +54,7 @@ export default class Gen {
       skipValidation: false,
     },
     // prompt: Prompt
-  ): Promise<Gen> {
+  ): Promise<OasGen> {
     if (!fs.existsSync(sourceFile)) {
       throw new Error('Source not found: ' + sourceFile);
     }
@@ -84,12 +84,12 @@ export default class Gen {
 
     const parser: Oas = new Oas(json as OASDocument);
     // return new ConnectorGen(oas, prompt);
-    return new Gen(parser);
+    return new OasGen(parser);
   }
 
   public parser: Oas;
   // public prompt: Prompt;
-  public context?: Context;
+  public context?: OasContext;
   public paths: Map<string, IType> = new Map();
 
   constructor(parser: Oas) {
@@ -103,6 +103,12 @@ export default class Gen {
 
   public version(): string {
     return this.parser.getDefinition().info.version;
+  }
+
+  public generateSchema(paths: string[]): string {
+    const writer: Writer = new Writer(this);
+    writer.generate(paths);
+    return writer.flush()
   }
 
   public async visit(): Promise<void> {
@@ -123,9 +129,9 @@ export default class Gen {
     this.paths = collected;
   }
 
-  public getContext(): Context {
+  public getContext(): OasContext {
     if (!this.context) {
-      this.context = new Context(this.parser);
+      this.context = new OasContext(this.parser);
     }
     return this.context;
   }
@@ -190,7 +196,7 @@ export default class Gen {
 
   // private methods
 
-  private visitGet(_context: Context, name: string, op: Operation): IType {
+  private visitGet(_context: OasContext, name: string, op: Operation): IType {
     // TODO
     // operation.visit(context);
     return Factory.createGet(name, op);
@@ -203,7 +209,7 @@ export default class Gen {
     });
   }
 
-  private visitPath(context: Context, name: string, pathItem: Record<string, Webhook | Operation>): IType {
+  private visitPath(context: OasContext, name: string, pathItem: Record<string, Webhook | Operation>): IType {
     const operation = pathItem.get;
     if (operation.constructor.name === 'Webhook') {
       throw new Error('Webhook not supported');

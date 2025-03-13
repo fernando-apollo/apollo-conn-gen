@@ -1,22 +1,19 @@
 import _ from 'lodash';
 import Oas from 'oas';
-import Context from '../context';
-import Gen from '../gen';
-import CircularRef from '../nodes/circular_ref';
-import Composed from '../nodes/comp';
-import Get from '../nodes/get';
-import Obj from '../nodes/obj';
-import Param from '../nodes/param/param';
-import Prop from '../nodes/props/prop';
-import PropArray from '../nodes/props/prop_array';
-import PropScalar from '../nodes/props/prop_scalar';
-import { IType, Type } from '../nodes/type';
-import Union from '../nodes/union';
-import Naming from '../utils/naming';
-import { T } from '../utils/type_utils';
 import { ServerObject } from 'oas/dist/types';
+import { OasContext } from '../oasContext';
+import { OasGen } from '../oasGen';
+import { CircularRef, Composed, Get, Obj } from '../nodes';
+import { Param } from '../nodes';
+import { Prop } from '../nodes';
+import { PropArray } from '../nodes';
+import { PropScalar } from '../nodes';
+import { IType, Type } from '../nodes';
+import { Union } from '../nodes';
+import { Naming } from '../utils';
+import { T } from '../utils';
 
-export default class Writer {
+export class Writer {
   public static findNonPropParent(type: IType) {
     let parent = type;
     while (parent instanceof Prop) {
@@ -35,7 +32,7 @@ export default class Writer {
   }
   public buffer: string[];
 
-  constructor(public generator: Gen) {
+  constructor(public generator: OasGen) {
     this.buffer = [];
   }
 
@@ -196,7 +193,7 @@ export default class Writer {
     writer.write('\nscalar JSON\n\n');
   }
 
-  private writeQuery(context: Context, writer: Writer, collected: Map<string, IType>, selection: string[]): void {
+  private writeQuery(context: OasContext, writer: Writer, collected: Map<string, IType>, selection: string[]): void {
     writer.write('type Query {\n');
 
     const selectionSet = new Set<string>(selection.map((s) => s.split('>')[0]));
@@ -212,7 +209,7 @@ export default class Writer {
     writer.write('}\n\n');
   }
 
-  private writeConnector(context: Context, writer: Writer, type: IType, selection: string[]): void {
+  private writeConnector(context: OasContext, writer: Writer, type: IType, selection: string[]): void {
     const indent = 0;
     const get = type as Get; // assume type is GetOp
     let spacing = ' '.repeat(indent + 4);
@@ -287,7 +284,7 @@ export default class Writer {
     return `{ GET: ${builder} }`;
   }
 
-  private writeSelection(context: Context, writer: Writer, type: IType, selection: string[]): void {
+  private writeSelection(context: OasContext, writer: Writer, type: IType, selection: string[]): void {
     context.indent = 6;
     type.select(context, writer, selection);
   }

@@ -1,12 +1,10 @@
-import _ from 'lodash';
-import { trace } from '../../log/trace';
-import { RenderContext } from '../../prompts/theme';
-import Context from '../context';
-import Writer from '../io/writer';
-import Naming from '../utils/naming';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Naming } from '../utils';
 import { IType, Type } from './type';
 
-export default class CircularRef extends Type {
+export class CircularRef extends Type {
   constructor(
     parent: IType,
     public ref: IType,
@@ -20,7 +18,7 @@ export default class CircularRef extends Type {
     // return this.child.id;
   }
 
-  public forPrompt(_: Context): string {
+  public forPrompt(_: OasContext): string {
     return `${Naming.getRefName(this.ref.name)} (Circular Ref in: ${this.parent?.id})`;
   }
 
@@ -28,19 +26,19 @@ export default class CircularRef extends Type {
     throw new Error('Should not be adding a child to a circular ref');
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     trace(context, '-> [circular-ref:visit]', `-> in: ${this.name}`);
     // Do nothing, this type is always visited.
     trace(context, '<- [circular-ref:visit]', `-> out: ${this.name}`);
   }
 
-  public generate(context: Context, writer: Writer): void {
+  public generate(context: OasContext, writer: Writer): void {
     trace(context, '-> [circular-ref:generate]', `-> in: ${this.name}`);
     // Do nothing, we can't really generate a circular reference.
     trace(context, '<- [circular-ref:generate]', `-> out: ${this.name}`);
   }
 
-  public select(context: Context, writer: Writer): void {
+  public select(context: OasContext, writer: Writer): void {
     trace(context, '-> [circular-ref:select]', `-> in: ${this.name}`);
 
     writer

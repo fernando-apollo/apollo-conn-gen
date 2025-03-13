@@ -1,11 +1,11 @@
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../../log/trace';
-import Context from '../../context';
-import Writer from '../../io/writer';
-import Naming from '../../utils/naming';
+import { trace } from '../../log/trace';
+import { OasContext } from '../../oasContext';
+import { Writer } from '../../io/writer';
+import { Naming } from '../../utils/naming';
 import { IType, Type } from '../type';
 
-export default abstract class Prop extends Type {
+export abstract class Prop extends Type {
   public required: boolean = false;
 
   constructor(
@@ -16,7 +16,7 @@ export default abstract class Prop extends Type {
     super(parent, name);
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     const description = this.schema.description;
     if (description != null) {
       if (description.includes('\n') || description.includes('\r') || description.includes('"')) {
@@ -40,9 +40,9 @@ export default abstract class Prop extends Type {
     writer.append('\n');
   }
 
-  public abstract getValue(context: Context): string;
+  public abstract getValue(context: OasContext): string;
 
-  protected generateValue(context: Context, writer: Writer): void {
+  protected generateValue(context: OasContext, writer: Writer): void {
     writer.append(this.getValue(context));
   }
 }

@@ -1,16 +1,15 @@
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../log/trace';
-import { RenderContext } from '../../prompts/theme';
-import Context from '../context';
-import Writer from '../io/writer';
-import Naming from '../utils/naming';
-import Arr from './arr';
-import Factory from './factory';
-import Prop from './props/prop';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { Naming } from '../utils/naming';
+import { Arr } from './arr';
+import { Factory } from './factory';
+import { Prop } from './props/prop';
 import { ReferenceObject } from './props/types';
 import { IType, Type } from './type';
 
-export default class Ref extends Type {
+export class Ref extends Type {
   public refType?: IType;
 
   constructor(
@@ -29,11 +28,11 @@ export default class Ref extends Type {
     return this.refType?.props ?? new Map();
   }
 
-  public forPrompt(context: Context): string {
+  public forPrompt(context: OasContext): string {
     return `${Naming.getRefName(this.name)} (Ref)`;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     // console.log('schema', this.schema);
     if (this.visited) {
       return;
@@ -58,7 +57,7 @@ export default class Ref extends Type {
     context.leave(this);
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [ref::generate]', `-> in: ${this.name}`);
 
@@ -77,7 +76,7 @@ export default class Ref extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [ref::select]', `-> in: ${this.name}`);
     if (this.refType) {
       this.refType.select(context, writer, selection);

@@ -1,8 +1,8 @@
 import { execSync, spawnSync } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
-import Gen from '../src/oas/gen';
-import Writer from '../src/oas/io/writer';
+import { OasGen } from '../src';
+import { Writer } from '../src/oas/io';
 import _ from 'lodash';
 import fs from 'fs';
 
@@ -504,18 +504,15 @@ async function run(
   shouldFail: boolean = false,
   skipValidation: boolean = false,
 ): Promise<string | undefined> {
-  const gen = await Gen.fromFile(`${base}/${file}`, { skipValidation });
+  const gen = await OasGen.fromFile(`${base}/${file}`, { skipValidation });
   await gen.visit();
 
   expect(gen.paths).toBeDefined();
   expect(gen.paths.size).toBe(pathsSize);
 
-  const writer: Writer = new Writer(gen);
-  writer.generate(paths);
-
+  const schema = gen.generateSchema(paths);
   expect(gen.context?.types.size).toBe(typesSize);
 
-  const schema = writer.flush();
   expect(schema).toBeDefined();
 
   const schemaFile = path.join(os.tmpdir(), file.replace(/yaml|json|yml/, 'graphql'));

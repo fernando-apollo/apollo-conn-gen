@@ -21,13 +21,13 @@ import figures from '@inquirer/figures';
 import type { PartialDeep } from '@inquirer/type';
 import _ from 'lodash';
 
-import Context from '../oas/context';
-import CircularRef from '../oas/nodes/circular_ref';
-import Composed from '../oas/nodes/comp';
-import En from '../oas/nodes/en';
-import PropArray from '../oas/nodes/props/prop_array';
-import PropScalar from '../oas/nodes/props/prop_scalar';
-import { IType } from '../oas/nodes/type';
+import { OasContext } from '../oasContext';
+import CircularRef from '../nodes/circular_ref';
+import Composed from '../nodes/comp';
+import En from '../nodes/en';
+import PropArray from '../nodes/props/prop_array';
+import PropScalar from '../nodes/props/prop_scalar';
+import { IType } from '../nodes/type';
 import { getMaxLength, isEscapeKey } from './base/utils';
 import { CustomTheme, RenderContext } from './theme';
 
@@ -82,7 +82,7 @@ const baseTheme: CustomTheme = {
 
 interface PromptConfig {
   message: string;
-  context: Context;
+  context: OasContext;
   types: IType[];
   pageSize?: number;
   loop?: boolean;

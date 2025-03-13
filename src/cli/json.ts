@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { Walker } from '../json/walker/walker';
+import { JsonGen } from '../json/walker/jsonGen';
 import { ConnectorWriter, StringWriter } from '../json/io/writer';
 
 // mute console.log
@@ -9,7 +9,7 @@ function walkSourceFile(source: string): void {
   const writer = new StringWriter();
   const fileContent = fs.readFileSync(source, 'utf-8');
 
-  const walker = Walker.fromReader(fileContent);
+  const walker = JsonGen.fromReader(fileContent);
   ConnectorWriter.write(walker, writer);
 
   console.info(writer.flush());

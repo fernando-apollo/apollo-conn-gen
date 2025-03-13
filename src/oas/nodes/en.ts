@@ -1,13 +1,12 @@
 import { SchemaObject } from 'oas/dist/types';
-import { trace } from '../../log/trace';
-import { RenderContext } from '../../prompts/theme';
-import Context from '../context';
-import Writer from '../io/writer';
-import GqlUtils from '../utils/gql';
-import Naming from '../utils/naming';
+import { trace } from '../log/trace';
+import { OasContext } from '../oasContext';
+import { Writer } from '../io/writer';
+import { GqlUtils } from '../utils/gql';
+import { Naming } from '../utils/naming';
 import { IType, Type } from './type';
 
-export default class En extends Type {
+export class En extends Type {
   constructor(
     parent: IType,
     public schema: SchemaObject,
@@ -20,7 +19,7 @@ export default class En extends Type {
     return 'enum:' + this.name;
   }
 
-  public visit(context: Context): void {
+  public visit(context: OasContext): void {
     if (this.visited) {
       return;
     }
@@ -38,11 +37,11 @@ export default class En extends Type {
     context.leave(this);
   }
 
-  public forPrompt(_context: Context): string {
+  public forPrompt(_context: OasContext): string {
     return `${Naming.getRefName(this.name)} (Enum): ${this.items.join(', ')}`;
   }
 
-  public generate(context: Context, writer: Writer, selection: string[]): void {
+  public generate(context: OasContext, writer: Writer, selection: string[]): void {
     context.enter(this);
     trace(context, '-> [enum::generate]', `-> in: ${this.name}`);
 
@@ -61,7 +60,7 @@ export default class En extends Type {
     context.leave(this);
   }
 
-  public select(context: Context, writer: Writer, selection: string[]) {
+  public select(context: OasContext, writer: Writer, selection: string[]) {
     trace(context, '-> [enum::select]', `-> in: ${this.name}`);
 
     // do nothing?
