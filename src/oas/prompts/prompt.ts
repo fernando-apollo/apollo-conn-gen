@@ -22,12 +22,12 @@ import type { PartialDeep } from '@inquirer/type';
 import _ from 'lodash';
 
 import { OasContext } from '../oasContext';
-import CircularRef from '../nodes/circular_ref';
-import Composed from '../nodes/comp';
-import En from '../nodes/en';
-import PropArray from '../nodes/props/prop_array';
-import PropScalar from '../nodes/props/prop_scalar';
-import { IType } from '../nodes/type';
+import { CircularRef } from '../nodes';
+import { Composed } from '../nodes';
+import { En } from '../nodes';
+import { PropArray } from '../nodes';
+import { PropScalar } from '../nodes';
+import { IType } from '../nodes';
 import { getMaxLength, isEscapeKey } from './base/utils';
 import { CustomTheme, RenderContext } from './theme';
 

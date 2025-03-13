@@ -1,8 +1,6 @@
 import { Command } from 'commander';
-import Gen from '../oas/oasGen';
-
-import Writer from '../oas/io/writer';
 import { generateFromSelection, promptForSelection } from './oas-helpers';
+import { OasGen } from '../oas';
 
 const originalConsole = {
   log: console.log,
@@ -12,7 +10,7 @@ const originalConsole = {
 async function main(sourceFile: string, opts: any): Promise<void> {
   console.log = () => {};
 
-  const gen = await Gen.fromFile(sourceFile, opts);
+  const gen = await OasGen.fromFile(sourceFile, opts);
   await gen.visit();
 
   let pathSet = Array.from(gen.paths.values());
@@ -40,10 +38,7 @@ async function main(sourceFile: string, opts: any): Promise<void> {
 
   console.info('selected :=', JSON.stringify(paths, null, 2));
   console.info('--------------- Apollo Connector schema -----------------');
-
-  const writer: Writer = new Writer(gen);
-  writer.generate(paths);
-  console.info(writer.flush());
+  console.info(gen.generateSchema(paths));
 }
 
 const program = new Command();

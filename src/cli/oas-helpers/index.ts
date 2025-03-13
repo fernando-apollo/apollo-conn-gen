@@ -1,37 +1,33 @@
 /// internal functions
-import Gen from '../../oas/oasGen';
 import fs from 'fs';
-import Writer from '../../oas/io/writer';
-import { IType, Type } from '../../oas/nodes/type';
-import Composed from '../../oas/nodes/comp';
-import Union from '../../oas/nodes/union';
-import Ref from '../../oas/nodes/ref';
+import { IType, Type } from '../../oas/nodes';
+import { Composed } from '../../oas/nodes';
+import { Union } from '../../oas/nodes';
+import { Ref } from '../../oas/nodes';
 import { typesPrompt } from '../../oas/prompts/prompt';
+import { OasGen } from '../../oas';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function generateFromSelection(opts: any, gen: Gen) {
+export function generateFromSelection(opts: any, gen: OasGen) {
   const selections = JSON.parse(fs.readFileSync(opts.loadSelections, { encoding: 'utf-8' }));
   if (!Array.isArray(selections)) {
     console.error('Invalid selections file');
     return;
   }
 
-  const writer: Writer = new Writer(gen);
-  writer.generate(selections);
-
   console.info('--------------- Apollo Connector schema -----------------');
-  console.info(writer.flush());
+  console.info(gen.generateSchema(selections));
   return;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function promptForSelection(gen: Gen, opts: any, types: IType[]) {
+export async function promptForSelection(gen: OasGen, opts: any, types: IType[]) {
   function expandType(type?: IType) {
     if (!type) {
       return types;
     }
 
-    let result: IType[] = [];
+    let result: IType[];
 
     if (type instanceof Composed || type instanceof Union) {
       // make sure we gather all the props
